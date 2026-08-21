@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Joric's Fuszerka Map</title>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="shortcut icon" type="image/x-icon" href="data:,">
+
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css">
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet-edgebuffer@1.0.7/src/leaflet.edgebuffer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tilelayer-canvas@1.1.5/index.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/leaflet-search@4.0.0/dist/leaflet-search.src.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-search@4.0.0/dist/leaflet-search.src.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-mouse-position@1.2.0/src/L.Control.MousePosition.min.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet-mouse-position@1.2.0/src/L.Control.MousePosition.min.js"></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.featuregroup.subgroup@1.0.2/dist/leaflet.featuregroup.subgroup.js"></script>
+
+<style>
+html, body, #map {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+</style>
+
+<div id="map"></div>
+
+<script>
+let tileset_base = location.protocol === 'file:' ? '../fuszerka_tileset' : 'https://joric.github.io/fuszerka_tileset';
+
+window.onload = function() {
+
+    const mapConfig = {
+        size: [1418.129, 1418.129],
+        center: [-36.60545, 290.75015]
+    };
+
+    const tileSize = 512;
+    const [w, h] = mapConfig.size;
+    const [cx, cy] = mapConfig.center;
+
+    const crs = L.CRS.Simple;
+
+    crs.transformation = new L.Transformation(
+        tileSize / w,
+        tileSize / 2 - cx * tileSize / w,
+        -tileSize / h,
+        tileSize / 2 + cy * tileSize / h
+    );
+
+    const map = L.map('map', {
+        crs: crs,
+        center: [cy, cx],
+        zoom: 1,
+        zoomControl: false,
+    });
+
+    map.addControl(L.control.zoom({ position: 'bottomright' }));
+
+    const bounds = L.latLngBounds(
+        map.unproject([0, tileSize], 0),
+        map.unproject([tileSize, 0], 0)
+    );
+
+    try {
+      L.control.mousePosition({wrapLng: false, lngFirst: true, lngFormatter:lng=>Math.round(lng), latFormatter:lat=>Math.round(lat)}).addTo(map);
+    } catch(e) {
+      console.log(e);
+    }
+
+    let baseLayers = {};
+
+    let baseLayer = L.tileLayer.canvas(tileset_base+'/tiles/1.3.003/{z}/{y}/{x}.webp', {
+    //let baseLayer = L.tileLayer.canvas('scripts/tiles/{z}/{y}/{x}.webp', {
+        edgeBufferTiles: 2,
+        tileSize: tileSize,
+        maxNativeZoom: 7,
+        maxZoom: 19,
+        bounds: bounds,
+        attribution: '<a href="https://github.com/joric/fuszerka/wiki" target=_blank>Joric\'s Fuszerka Map Wiki</a>',
+    }).addTo(map);
+
+    var blankTileLayer = L.tileLayer('https://via.placeholder.com/1x1/000000/ffffff?text=blank', {
+        attribution: 'Blank Map'
+    });
+
+    baseLayers['blank'] = blankTileLayer;
+
+
+    baseLayers['Fuszerka-1.3-64k'] = baseLayer;
+
+    const globalClusterGroup = L.markerClusterGroup({
+      chunkedLoading: true,
+      //disableClusteringAtZoom: config.zoomlevels,
+      showCoverageOnHover: false,
+      spiderfyOnMaxZoom: true,
+      removeOutsideVisibleBounds: true,
+      //zoomToBoundsOnClick: false,
+      maxClusterRadius: 16,
+      //animateAddingMarkers: false,
+      //animate: false,
+    });
+
+    globalClusterGroup.on('clustermouseover', function(a) {
+      if (a.layer && ( a.layer._childCount < 10)) a.layer.spiderfy();
+    });
+
+    let layers =  {};
+
+    function getImageBounds([iw, ih], [[ax, ay], [bx, by]], [[cLat, cLng], [dLat, dLng]]) {
+      const sx = (dLng - cLng) / (bx - ax);
+      const sy = (dLat - cLat) / (by - ay);
+      const x0 = cLng - ax * sx;
+      const y0 = cLat - ay * sy;
+      const x1 = x0 + iw * sx;
+      const y1 = y0 + ih * sy;
+      return [[Math.min(y0,y1), Math.min(x0,x1)], [Math.max(y0,y1), Math.max(x0,x1)]];
+    }
+
+    let imageBounds = getImageBounds([1628, 809], [[706.5,711.5],[844,166]], [[-102.185, 5.1865],[603.6866, 180.6469]]);
+
+    let imageLayer = L.imageOverlay('images/Map_Game.png', imageBounds, {
+      //opacity: 0.5,
+    });
+
+    layers['overlay'] = imageLayer;
+
+    //imageLayer.addTo(map);
+
+    let markersLayer = L.featureGroup.subGroup(globalClusterGroup);
+
+    layers['markers'] = markersLayer;
+
+    map.addLayer(globalClusterGroup);
+    map.addLayer(markersLayer);
+
+    let layercontrol = L.control.layers(baseLayers, layers, {collapsed: false, position: 'topright'}).addTo(map);
+
+    searchControl = new L.Control.Search({
+      propertyName: 'path',
+      layer: L.featureGroup(Object.values(layers)),
+      hideMarkerOnCollapse: true,
+      initial: false,
+      position: 'topleft',
+      /*
+      filterData: (text, records) => Object.fromEntries(
+        Object.entries(records).filter(([_,r])=>map.hasLayer(r.layer._eventParents?.[Object.keys(r.layer._eventParents)[0]])&&(r.layer.options.id||'').toLowerCase().includes(text.toLowerCase())
+      )),
+      */
+    })
+
+    map.addControl(searchControl);
+
+    map.removeLayer(imageLayer);
+    //map.removeLayer(markersLayer);
+
+
+    fetch('data/markers.json')
+        .then(r => r.json())
+        .then(data => {
+
+            const filters = {
+                //border: '_ENVIRONMENT_/MainMapBorder/MainMapBorder_ALL_\\d+$',
+                border: `MainMapBorder_ALL`,
+                /*
+                flowers: 'FlowerBouquet_\\d+/View/FlowerBouquet$',
+                balloon: '_ItemSlot_Balloon_\\d+/Preview/Baloon_\\d+$',
+                krystyna: '\\(Grabbable_Collectable_Prop\\)_Animal_Cow$',
+                valve: '/\\(Part\\)_SteeringWheel_Valve_1$',
+                part: '/Grabbable/[^/]+$',
+                tire: '^_ENVIRONMENT_.+/Tire_\\d+$',
+                fence: '\\(Grabbable_Prop\\)_DEMOUTABLE_MetalFence_02_Straight_Red$',
+                recipe: '\\(Interactable_Readable_Prop\\)_AB_05_ForestSpiritRecipe$',
+                paint: 'Paint Spray - \\w+$',
+                */
+                //grabbable: `Grabbable_Prop`,
+                //interactable: `Interactable_Prop`,
+
+            };
+                    //if (match) feature.properties.title = match[0];
+
+            L.geoJSON(data, {
+
+                coordsToLatLng: coords => L.latLng(coords[2], coords[0]),
+
+                filter: feature => {
+                    let match = Object.entries(filters).find(([key, regex]) =>
+                        new RegExp(regex).test(feature.properties.path)
+                    );
+
+                    if (feature.properties.itemName || feature.properties.partNameKey) match = true;
+
+                    //match = true;
+
+                    return !!match;
+                },
+
+                pointToLayer: (feature, latlng) => {
+                    const marker = L.marker(latlng);
+
+                    marker.bindPopup(() =>
+                        '<pre style="white-space:pre-wrap;overflow-wrap:anywhere;width:320px">' +
+                        JSON.stringify(feature, null, 2) +
+                        '</pre>' +
+                        String(marker.getLatLng())
+                    );
+
+                    marker.bindTooltip(
+                        feature.properties.itemName ?  `${feature.properties.name} [${feature.properties.itemName}]` : feature.properties.name || ''
+                    );
+
+                    return marker;
+                }
+            }).addTo(markersLayer);
+        });
+};
+</script>
+
+</body>
+</html>
