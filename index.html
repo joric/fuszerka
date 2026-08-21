@@ -37,6 +37,7 @@ html, body, #map {
 
 <script>
 let tileset_base = location.protocol === 'file:' ? '../fuszerka_tileset' : 'https://joric.github.io/fuszerka_tileset';
+let searchControl = null;
 
 window.onload = function() {
 
@@ -172,6 +173,7 @@ window.onload = function() {
             const filters = {
                 //border: '_ENVIRONMENT_/MainMapBorder/MainMapBorder_ALL_\\d+$',
                 border: `MainMapBorder_ALL`,
+                treelights: `Treelights`,
                 /*
                 flowers: 'FlowerBouquet_\\d+/View/FlowerBouquet$',
                 balloon: '_ItemSlot_Balloon_\\d+/Preview/Baloon_\\d+$',
@@ -224,6 +226,17 @@ window.onload = function() {
             }).addTo(markersLayer);
         });
 };
+
+  document.addEventListener("keydown",function (e) {
+    if (e.target.id.startsWith('searchtext')) return;
+    if (e.code=='KeyF') {
+      if (e.ctrlKey) {
+        searchControl.expand(true);
+        e.preventDefault();
+      }
+    }
+  });
+
 </script>
 
 </body>
