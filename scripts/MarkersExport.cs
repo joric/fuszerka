@@ -10,6 +10,7 @@ var NAME_FILTERS = new[] { "MainMapBorder" };
 var EXPORT_ACTIVE = false;
 var EXPORT_SCENE = false;
 var EXPORT_COMPONENTS = false;
+var EXPORT_ES3 = false;
 
 var ALLOWED_FIELDS = new[] { "m_color" };
 
@@ -167,10 +168,11 @@ for (int index = 0; index < matches.Count; index++) {
 
     var properties = new System.Collections.Generic.Dictionary<string, object>();
 
-    if (es3 >= 0)
-        properties["es3ref"] = es3;
+    if (EXPORT_ES3) {
+        if (es3 >= 0)
+            properties["es3ref"] = es3;
+    }
 
-    properties["type"] = "GameObject";
     properties["name"] = go.name;
     properties["path"] = path;
 
