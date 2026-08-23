@@ -11,6 +11,7 @@ function getKey(input) {
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_([^_]+)/)) return `IntEnv_${m[1]}`;
     if (/^\(Grabbable_Prop\)_Brick(?:_|$)/.test(str)) return 'IntEnv_Brick';
     if (/^\(Grabbable_Prop\)_QuestPlank(?:_|$)/.test(str)) return 'IntEnv_WoodenPlank';
+    if (/^\(Grabbable_Prop\)_Crate(?:_|$)/.test(str)) return 'IntEnv_WoodenCrate';
     if (m = str.match(/^\(Grabbable_Prop\)_DEMOUTABLE_([^_]+)/)) return `ShopItem_${m[1]}_Name`;
     if (m = str.match(/^\(Grabbable_Prop\)_(.+)$/)) {
         const name = m[1].replace(/(?:_\d+)+$/, '');
