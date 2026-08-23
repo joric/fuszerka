@@ -17,24 +17,12 @@ function getKey(input) {
     }
     if (m = str.match(/^\(Tool\)_?(.+?)(?:_\d+)?$/)) return `ToolName_${m[1].trim().replace(/\s+/g, '')}`;
     if (m = str.match(/^\(Fluid\)\s+(.+?)(?:_\d+)?$/)) return `FluidName_${m[1].replace(/\s+/g, '')}`;
-
-    if (str.startsWith('(Part)_')) {
-        const name = str.slice(7).replace(/_\d+$/, '');
-        return `PartName_${name}`;
-    }
-
-    if (/^\(Part\)\s+TimingGearCover_\d+$/.test(str)) return 'PSI_TimingChainCover';
-    if (/^\(Part\)\s+TimingGear_\d+$/.test(str)) return 'PSI_TimingGearBig';
-    if (m = str.match(/^\(Part\)\s+(Axle|BrakeDrum)_\d+$/)) return `PartName_${m[1]}`;
-    if (m = str.match(/^\(Part\)\s+(Muffler)_\d+$/)) return `PartName_${m[1]}`;
-
+    if (str.startsWith('(Part)_')) return `PartName_${str.slice(7).replace(/_\d+$/, '')}`;
     if (m = str.match(/^\(Part\)\s+([^-]+?)\s*-\s*(.+)$/)) {
         const name = m[1].trim().replace(/\s+/g, '');
         const desc = m[2].trim().replace(/\s+/g, '');
-        if (/^[A-Z]\d+$/.test(name) && !/\d/.test(desc)) return `PSI_${name}_${desc}`;
         return `PartName_${name}_${desc}`;
     }
-
     if (m = str.match(/^\(Part\)\s+([^_]+)_\d+$/)) return `PartName_${m[1]}`;
     if (m = str.match(/^\(Part\)\s+([^_]+)$/)) return `PartName_${m[1]}`;
     if (str.startsWith('(Part) ')) return `PartName_${str.slice(7).replace(/\s+/g, '')}`;
@@ -51,12 +39,11 @@ function getTitle(p) {
         keys.push(`PSI_${name}`, `PartName_Polonez_${name}`, `PartName_Fiat126p_${name}`);
     }
 
-    for (const key of keys) {
+    for (const key of keys)
         for (const postfix of ['', '_2', '_01', '_02', '_03', '_04', '_R']) {
             const value = lang[key + postfix];
             if (value) return value;
         }
-    }
 
     return p.name;
 }
