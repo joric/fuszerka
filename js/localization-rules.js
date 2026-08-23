@@ -19,6 +19,12 @@ function getKey(input) {
         return `ShopItem_${name}_Name`;
     }
 
+    if (m = str.match(/^\(Grabbable_Tool\)__+(.+?)(?:_\d+)?$/)) {
+        const name = m[1].trim().replace(/\s+/g, '');
+        if (name === 'GrinderDisc') return 'ToolName_GrindingDisc';
+        return `ToolName_${name}`;
+    }
+
     if (/^\(Interactable_Readable_Prop\)_AB_\d+_DrinkingBeer$/.test(str)) return 'FluidName_Beer';
     if (m = str.match(/^\(Interactable_Readable_Prop\)_AB_\d+_.*Recipe$/)) return 'IntEnv_Recipe';
     if (m = str.match(/^\(Interactable_Diggable_Prop\)_PlantingPile_Treasure(?:_\d+)?$/)) return 'FluidName_BadProduct';
@@ -51,7 +57,6 @@ function getKey(input) {
         }
         return `PartName_${prefix}_${name}`;
     }
-
     if (str.startsWith('(Part)_')) return `PartName_${str.slice(7).replace(/_\d+$/, '')}`;
     if (m = str.match(/^\(Part\)\s+(.+)$/)) return `PartName_${m[1].trim().replace(/_\d+$/, '').replace(/\s+/g, '')}`;
 
