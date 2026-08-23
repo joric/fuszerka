@@ -29,7 +29,7 @@ function getKey(input) {
 
     if (m = /^\(Tool\)\s+Paint Spray\s*-\s*(.+)$/.exec(str)) {
         const color = m[1].trim();
-        const named = color.match(/^(.+)_\d+$/);
+        const named = /^(.+)_\d+$/.exec(color);
         return named ? `PaintColor_${named[1]}` : `SprayName_${color.replace(/\s+/g, '')}`;
     }
 
@@ -46,7 +46,7 @@ function getKey(input) {
     }
 
     if (str.startsWith('(Part)_')) {
-        const name = str.slice(7).replace(/\(Clone\)$/, '').replace(/-/g, '_').replace(/_\d+$/, '');
+        const name = str.slice(7).replace(/\(Clone\)$/, '').replace(/_\d+$/, '').replace(/[-_]/g, '');
         return `PartName_${name}`;
     }
 
