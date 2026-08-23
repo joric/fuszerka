@@ -19,7 +19,7 @@ function getKey(input) {
     if (m = str.match(/^\(Fluid\)\s+(.+?)(?:_\d+)?$/)) return `FluidName_${m[1].replace(/\s+/g, '')}`;
 
     if (str.startsWith('(Part)_')) {
-        const name = str.slice(7).replace(/_\d+$/, '').replace(/[-_]/g, '');
+        const name = str.slice(7).replace(/_\d+$/, '');
         return `PartName_${name}`;
     }
 
@@ -52,7 +52,7 @@ function getTitle(p) {
     }
 
     for (const key of keys) {
-        for (const postfix of ['', '_2', '_01', '_02', '_03', '_04']) {
+        for (const postfix of ['', '_2', '_01', '_02', '_03', '_04', '_R']) {
             const value = lang[key + postfix];
             if (value) return value;
         }
