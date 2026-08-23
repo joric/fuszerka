@@ -21,6 +21,12 @@ function getKey(input) {
     if (m = /^\(Interactable\)\s+(.+)/.exec(str))
         return `IntEnv_${m[1].trim().replace(/\s+/g, '')}`;
 
+    if (m = /^\(Tool\)\s+Paint Spray\s*-\s*(.+)$/.exec(str)) {
+        const color = m[1].trim();
+        const named = color.match(/^(.+)_\d+$/);
+        return named ? `PaintColor_${named[1]}` : `SprayName_${color.replace(/\s+/g, '')}`;
+    }
+
     if (m = /^\(Part\)\s+([^-]+?)\s*-\s*([^_]+?)(?:_\d+)?$/.exec(str)) {
         const name = m[1].trim().replace(/\s+/g, '');
         const desc = m[2].trim().replace(/\s+/g, '');
