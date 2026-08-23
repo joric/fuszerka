@@ -182,10 +182,10 @@ window.onload = function() {
 
   layers['markers'] = markersLayer;
 
-  // Plain (never-added-to-map) layer group that always holds every marker,
-  // regardless of the current keyword filter. This is the single source of
-  // truth the search control reads from — no separate JS array needed.
-  let allMarkersLayer = L.layerGroup();
+  // Snapshot of every marker, taken once after loading finishes (before any
+  // filtering happens). The search control reads from this snapshot instead
+  // of markersLayer.getLayers(), since filtering clears/repopulates that layer.
+  let allMarkers = [];
 
   map.addLayer(globalClusterGroup);
   map.addLayer(markersLayer);
@@ -201,7 +201,7 @@ window.onload = function() {
     clearTitle: 'Clear',
     autofocus: false,
     enableShortcut: true,
-    getMarkers: () => allMarkersLayer.getLayers(),
+    getMarkers: () => allMarkers,
     getSearchableText: (marker) => getSearchableText(marker),
     targetLayer: markersLayer,
   }).addTo(map);
@@ -212,17 +212,18 @@ window.onload = function() {
   fetch('data/markers.json')
       .then(r => r.json())
       .then(data => {
-          L.geoJSON(data, {
+          const geoJsonLayer = L.geoJSON(data, {
               coordsToLatLng: coords => L.latLng(coords[2], coords[0]),
               pointToLayer: (feature, latlng) => {
                   const marker = L.marker(latlng);
                   marker.bindPopup(() => `<pre style="white-space:pre-wrap;overflow-wrap:anywhere;width:320px">${JSON.stringify(feature, null, 2)}</pre>`);
                   marker.bindTooltip(()=> feature.properties.title || feature.properties.itemName || feature.properties.name ||'');
-                  allMarkersLayer.addLayer(marker);
-                  markersLayer.addLayer(marker);
                   return marker;
               }
           });
+
+          geoJsonLayer.addTo(markersLayer);
+          allMarkers = geoJsonLayer.getLayers();
       });
 
 /*
