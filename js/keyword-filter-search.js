@@ -48,8 +48,8 @@
   padding: 8px 12px;
   font-size: 14px;
   font-family: inherit;
-  width: 100px;
-  transition: width 0.2s ease;
+  width: 80px;
+  transition: all 0.3s ease;
 }
 
 .keyword-filter-control .keyword-filter-input:focus {
