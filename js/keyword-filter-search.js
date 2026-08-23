@@ -57,7 +57,7 @@
 }
 
 .keyword-filter-control .keyword-filter-count {
-  font-size: 11px;
+  font-size: 14px;
   color: #888;
   padding: 0 6px;
   white-space: nowrap;
@@ -195,7 +195,7 @@
       });
 
       if (this._count) {
-        this._count.textContent = keywords.length === 0 ? '' : matchCount + ' found';
+        this._count.textContent = keywords.length === 0 ? '' : matchCount + ' markers';
       }
 
       if (typeof this.options.onFilter === 'function') {
