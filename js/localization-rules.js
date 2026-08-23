@@ -9,7 +9,12 @@ function getKey(input) {
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_([^_]+)/)) return `IntEnv_${m[1]}`;
     if (/^\(Grabbable_Prop\)_Brick(?:_|$)/.test(str)) return 'IntEnv_Brick';
     if (m = str.match(/^\(Grabbable_Prop\)_DEMOUTABLE_([^_]+)/)) return `ShopItem_${m[1]}_Name`;
-    if (m = str.match(/^\(Grabbable_Prop\)_([^_]+)/)) return `ShopItem_${m[1]}_Name`;
+    if (m = str.match(/^\(Grabbable_Prop\)_([^_]+(?:_[^_]+)*)$/)) {
+        const name = m[1].replace(/(?:_\d+)+$/, '');
+        if (name === 'PlankPanel') return 'IntEnv_WoodenPanel';
+        if (name === 'Cardboard_Box') return 'IntEnv_CardboardBox';
+        return `ShopItem_${name}_Name`;
+    }
     if (/^\(Interactable_Readable_Prop\)_AB_\d+_.*Recipe$/.test(str)) return 'IntEnv_Recipe';
     if (m = str.match(/^\(Interactable_Prop\)_+([^_]+)/)) return `IntEnv_${m[1]}`;
     if (m = str.match(/^\(Interactable\)\s+(.+)/)) return `IntEnv_${m[1].trim().replace(/\s+/g, '')}`;
@@ -18,9 +23,12 @@ function getKey(input) {
         return /_\d+$/.test(name) ? `PaintColor_${name.replace(/_\d+$/, '')}` : `SprayName_${name}`;
     }
     if (m = str.match(/^\(Tool\)_?(.+?)(?:_\d+)?$/)) return `ToolName_${m[1].trim().replace(/\s+/g, '')}`;
-    if (m = str.match(/^\(Fluid\)\s+(.+?)(?:_\d+)?$/)) return `FluidName_${m[1].replace(/\s+/g, '')}`;
+    if (m = str.match(/^\(Fluid\)\s+(.+)$/)) {
+        let name = m[1].replace(/_\d+$/, '').trim();
+        name = name.replace(/\s+Bottle$/i, '').trim();
+        return `FluidName_${name.replace(/\s+/g, '')}`;
+    }
     if (m = str.match(/^\(NoShop_Part_Decoration\)\s+(.+?)(?:_\d+)$/)) return `PartName_${m[1]}`;
-
     if (str.startsWith('(Part)_')) return `PartName_${str.slice(7).replace(/_\d+$/, '')}`;
     if (m = str.match(/^\(Part\)\s+([^-]+?)\s*-\s*(.+)$/)) {
         const name = m[1].trim().replace(/\s+/g, '');
