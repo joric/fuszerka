@@ -77,6 +77,7 @@ function getKey(input) {
         }
         n = n.replace(/(?:_\d+)+$/, '');
         if (n === 'AirFilterHousing') return 'PartName_Zuk_AirFilter_Housing';
+        if (n === 'CarStarter') return 'PSI_Starter';
         return `PartName_${n.replace(/\s+/g, '_')}`;
     }
 
