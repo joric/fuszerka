@@ -224,7 +224,7 @@ window.onload = function() {
               pointToLayer: (feature, latlng) => {
                   const marker = L.marker(latlng);
                   //marker.bindPopup(() => `${getLocalizedTitle(feature.properties)}<pre style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${JSON.stringify(feature, null, 2)}</pre>`);
-                  marker.bindPopup(() => `${getLocalizedTitle(feature.properties)}<hr><div style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${feature.properties.path}<br>${feature.properties.key||''}</div>`, {minWidth:320, maxWidth:400});
+                  marker.bindPopup(() => `${getLocalizedTitle(feature.properties)}<hr><div style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${feature.properties.path}</div>`, {minWidth:320, maxWidth:400});
                   marker.bindTooltip(()=> getLocalizedTitle(feature.properties) || feature.properties.name || '');
                   return marker;
               }
