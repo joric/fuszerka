@@ -1,6 +1,5 @@
 var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
 var roots = scene.GetRootGameObjects();
-
 var output = @"C:\Temp\markers.json";
 var progress = @"C:\Temp\markers.progress";
 
@@ -12,361 +11,338 @@ var EXPORT_SCENE = false;
 var EXPORT_COMPONENTS = false;
 var EXPORT_ES3 = false;
 
-// outputKey -> (alias names to try, optional component-type filter)
-var ALLOWED_FIELDS = new System.Collections.Generic.Dictionary<string, System.Tuple<string[], string[]>> {
-    { "m_ItemName", System.Tuple.Create(new[] { "m_ItemName", "Name" }, new[] { "ItemIdentifier" }) },
-    { "m_PaintColor", System.Tuple.Create(new[] { "m_PaintColor" }, (string[])null) },
-    { "m_SprayName", System.Tuple.Create(new[] { "m_SprayName" }, (string[])null) },
-    { "m_PartName", System.Tuple.Create(new[] { "m_PartName" }, (string[])null) },
-    { "m_Amount", System.Tuple.Create(new[] { "m_Amount", "Amount" }, (string[])null) },
-    { "m_Capacity", System.Tuple.Create(new[] { "m_Capacity", "Capacity" }, (string[])null) },
-    { "m_Content", System.Tuple.Create(new[] { "m_Content" }, (string[])null) },
-};
-
-var MAX_DEPTH = 4;
 var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic;
 
-var findField = new System.Func<object, string, System.Reflection.FieldInfo>((o, n) => {
+var field = new System.Func<object,string,object>((o,n) => {
     if (o == null) return null;
-    var t = o.GetType();
-    while (t != null) {
+    for (var t = o.GetType(); t != null; t = t.BaseType) {
         var f = t.GetField(n, flags);
-        if (f != null) return f;
-        t = t.BaseType;
+        if (f != null) try { return f.GetValue(o); } catch {}
     }
     return null;
 });
 
-var getField = new System.Func<object, string, object>((o, n) => {
-    var f = findField(o, n);
-    if (f == null) return null;
-    try { return f.GetValue(o); } catch { return null; }
-});
-
-var findProp = new System.Func<object, string, System.Reflection.PropertyInfo>((o, n) => {
+var prop = new System.Func<object,string,object>((o,n) => {
     if (o == null) return null;
-    var t = o.GetType();
-    while (t != null) {
+    for (var t = o.GetType(); t != null; t = t.BaseType) {
         var p = t.GetProperty(n, flags);
-        if (p != null && p.GetIndexParameters().Length == 0) return p;
-        t = t.BaseType;
+        if (p != null && p.GetIndexParameters().Length == 0) try { return p.GetValue(o, null); } catch {}
     }
     return null;
 });
 
-var getProp = new System.Func<object, string, object>((o, n) => {
-    var p = findProp(o, n);
-    if (p == null) return null;
-    try { return p.GetValue(o, null); } catch { return null; }
-});
-
-var isLeaf = new System.Func<System.Type, bool>((t) => {
-    if (t == null) return true;
-    if (t.IsPrimitive || t.IsEnum) return true;
-    if (t == typeof(string) || t == typeof(decimal)) return true;
-    if (t == typeof(UnityEngine.Color) || t == typeof(UnityEngine.Vector2) ||
-        t == typeof(UnityEngine.Vector3) || t == typeof(UnityEngine.Vector4) ||
-        t == typeof(UnityEngine.Quaternion)) return true;
-    return false;
-});
-
-// Recursively looks for a field/property named n, reachable from o via
-// fields and list items. Won't cross into other Unity objects/components,
-// and tracks visited references to avoid cycles.
-System.Func<object, string, int, System.Collections.Generic.HashSet<object>, object> findFieldDeep = null;
-findFieldDeep = (o, n, depth, visited) => {
+var locKey = new System.Func<object,string>(o => {
     if (o == null) return null;
 
-    var t = o.GetType();
-    if (isLeaf(t)) return null;
-
-    if (!t.IsValueType) {
-        if (visited.Contains(o)) return null;
-        visited.Add(o);
-    }
-
-    var direct = getField(o, n) ?? getProp(o, n);
-    if (direct != null) return direct;
-    if (depth <= 0) return null;
-
-    for (var wt = t; wt != null; wt = wt.BaseType) {
-        foreach (var f in wt.GetFields(flags)) {
-            object v;
-            try { v = f.GetValue(o); } catch { continue; }
-            if (v == null) continue;
-            if ((v is UnityEngine.GameObject || v is UnityEngine.Component) && !ReferenceEquals(v, o)) continue;
-
-            if (v is System.Collections.IEnumerable && !(v is string)) {
-                foreach (var item in (System.Collections.IEnumerable)v) {
-                    var found = findFieldDeep(item, n, depth - 1, visited);
-                    if (found != null) return found;
-                }
-                continue;
+    var ls = o as UnityEngine.Localization.LocalizedString;
+    if (ls != null) {
+        try {
+            var r = prop(ls, "TableEntryReference");
+            if (r != null) {
+                var k = prop(r, "Key") as string;
+                if (!string.IsNullOrEmpty(k)) return k;
             }
-
-            var nested = findFieldDeep(v, n, depth - 1, visited);
-            if (nested != null) return nested;
-        }
+        } catch {}
     }
 
-    return null;
-};
+    var s = o.ToString();
+    if (string.IsNullOrEmpty(s)) return null;
 
-// Reads the actual localization key off a LocalizedString via its real
-// properties - no ToString()/regex parsing involved.
-var getLocalizedKey = new System.Func<object, string>((v) => {
-    if (!(v is UnityEngine.Localization.LocalizedString)) return null;
-    var entryRef = getProp(v, "TableEntryReference");
-    return entryRef == null ? null : getProp(entryRef, "Key") as string;
+    var marker = "TableEntryReference(";
+    var p = s.IndexOf(marker, StringComparison.Ordinal);
+    if (p < 0) return null;
+
+    p += marker.Length;
+    var e = s.IndexOf(')', p);
+    if (e < 0) return null;
+
+    var x = s.Substring(p, e - p);
+    var d = x.IndexOf(" - ", StringComparison.Ordinal);
+    if (d >= 0) x = x.Substring(d + 3);
+
+    return x.Trim().TrimEnd(')');
 });
 
-// Finds the first LocalizedString reachable from o, matched by actual
-// type rather than by field name - so it works regardless of what the
-// containing field is called (e.g. a Fluid asset's name field).
-System.Func<object, int, System.Collections.Generic.HashSet<object>, object> findLocalizedString = null;
-findLocalizedString = (o, depth, visited) => {
+var findLocKey = new System.Func<object,string>(o => {
     if (o == null) return null;
-    if (o is UnityEngine.Localization.LocalizedString) return o;
 
-    var t = o.GetType();
-    if (isLeaf(t) || depth <= 0) return null;
-    if (!t.IsValueType) {
-        if (visited.Contains(o)) return null;
-        visited.Add(o);
-    }
+    var k = locKey(o);
+    if (!string.IsNullOrEmpty(k)) return k;
 
-    for (var wt = t; wt != null; wt = wt.BaseType) {
-        foreach (var f in wt.GetFields(flags)) {
-            object v;
-            try { v = f.GetValue(o); } catch { continue; }
-            if (v == null) continue;
-            if (v is UnityEngine.Localization.LocalizedString) return v;
-            if (v is UnityEngine.Object && !ReferenceEquals(v, o)) continue;
+    var visited = new System.Collections.Generic.HashSet<object>();
 
-            if (v is System.Collections.IEnumerable && !(v is string)) {
-                foreach (var item in (System.Collections.IEnumerable)v) {
-                    var found = findLocalizedString(item, depth - 1, visited);
-                    if (found != null) return found;
-                }
-                continue;
-            }
+    System.Func<object,int,string> scan = null;
+    scan = (v, depth) => {
+        if (v == null || depth < 0) return null;
 
-            var nested = findLocalizedString(v, depth - 1, visited);
-            if (nested != null) return nested;
+        var direct = locKey(v);
+        if (!string.IsNullOrEmpty(direct)) return direct;
+
+        if (v is UnityEngine.Object && !(v is UnityEngine.Localization.LocalizedString))
+            return null;
+
+        var type = v.GetType();
+        if (type.IsPrimitive || type.IsEnum || type == typeof(string))
+            return null;
+
+        if (!type.IsValueType) {
+            if (visited.Contains(v)) return null;
+            visited.Add(v);
         }
-    }
 
-    return null;
-};
+        foreach (var f in type.GetFields(flags)) {
+            if (f.IsStatic) continue;
 
-// Looks up each candidate field name on the component (direct, then deep),
-// and if what's found either is or contains a LocalizedString, returns its key.
-var KEY_SOURCES = new[] { "m_PartName", "m_SprayName", "m_Content" };
-var DESCRIPTION_KEY_SOURCES = new[] { "m_PartDescription" };
+            object x;
+            try { x = f.GetValue(v); } catch { continue; }
+            if (x == null) continue;
 
-var extractLocKey = new System.Func<UnityEngine.Component, string[], string>((component, sourceNames) => {
-    foreach (var name in sourceNames) {
-        object value = getField(component, name) ?? getProp(component, name);
-        if (value == null) value = findFieldDeep(component, name, MAX_DEPTH, new System.Collections.Generic.HashSet<object>());
-        if (value == null) continue;
+            var result = scan(x, depth - 1);
+            if (!string.IsNullOrEmpty(result)) return result;
+        }
 
-        var ls = findLocalizedString(value, MAX_DEPTH, new System.Collections.Generic.HashSet<object>());
-        var key = getLocalizedKey(ls);
-        if (!string.IsNullOrEmpty(key)) return key;
-    }
-    return null;
+        foreach (var p in type.GetProperties(flags)) {
+            if (p.GetIndexParameters().Length > 0) continue;
+
+            object x;
+            try { x = p.GetValue(v, null); } catch { continue; }
+            if (x == null) continue;
+
+            var result = scan(x, depth - 1);
+            if (!string.IsNullOrEmpty(result)) return result;
+        }
+
+        return null;
+    };
+
+    return scan(o, 3);
 });
 
-// Converts a reflected value into a plain, JSON-safe shape (dict/list/
-// primitive only) so it can be handed to Json.NET without it wandering
-// into Unity's computed properties or asset references.
-System.Func<object, int, System.Collections.Generic.HashSet<object>, object> toJsonSafe = null;
-toJsonSafe = (value, depth, visited) => {
-    if (value == null) return null;
-
-    if (value is UnityEngine.Color) {
-        var c = (UnityEngine.Color)value;
-        return new System.Collections.Generic.Dictionary<string, object> { { "r", c.r }, { "g", c.g }, { "b", c.b }, { "a", c.a } };
-    }
-    if (value is UnityEngine.Vector2) {
-        var v = (UnityEngine.Vector2)value;
-        return new System.Collections.Generic.Dictionary<string, object> { { "x", v.x }, { "y", v.y } };
-    }
-    if (value is UnityEngine.Vector3) {
-        var v = (UnityEngine.Vector3)value;
-        return new System.Collections.Generic.Dictionary<string, object> { { "x", v.x }, { "y", v.y }, { "z", v.z } };
-    }
-    if (value is UnityEngine.Vector4) {
-        var v = (UnityEngine.Vector4)value;
-        return new System.Collections.Generic.Dictionary<string, object> { { "x", v.x }, { "y", v.y }, { "z", v.z }, { "w", v.w } };
-    }
-    if (value is UnityEngine.Quaternion) {
-        var q = (UnityEngine.Quaternion)value;
-        return new System.Collections.Generic.Dictionary<string, object> { { "x", q.x }, { "y", q.y }, { "z", q.z }, { "w", q.w } };
-    }
-
-    var type = value.GetType();
-    if (type.IsEnum) return value.ToString();
-    if (type.IsPrimitive || value is string || value is decimal) return value;
-
-    if (value is UnityEngine.Object) {
-        var uo = (UnityEngine.Object)value;
-        return uo == null ? null : uo.name;
-    }
-
-    if (value is System.Collections.IEnumerable) {
-        var list = new System.Collections.Generic.List<object>();
-        if (depth > 0)
-            foreach (var item in (System.Collections.IEnumerable)value)
-                list.Add(toJsonSafe(item, depth - 1, visited));
-        return list;
-    }
-
-    if (!type.IsValueType) {
-        if (visited.Contains(value)) return null;
-        visited.Add(value);
-    }
-    if (depth <= 0) return value.ToString();
-
-    var dict = new System.Collections.Generic.Dictionary<string, object>();
-    for (var wt = type; wt != null; wt = wt.BaseType) {
-        foreach (var f in wt.GetFields(flags)) {
-            if (f.IsStatic || dict.ContainsKey(f.Name)) continue;
-            object fv;
-            try { fv = f.GetValue(value); } catch { continue; }
-            dict[f.Name] = toJsonSafe(fv, depth - 1, visited);
-        }
-    }
-    return dict;
-};
-
-var getAllowedFields = new System.Func<UnityEngine.Component, System.Collections.Generic.Dictionary<string, object>>((component) => {
-    var result = new System.Collections.Generic.Dictionary<string, object>();
-    if (component == null) return result;
-
-    var compType = component.GetType().Name;
-
-    foreach (var entry in ALLOWED_FIELDS) {
-        var aliases = entry.Value.Item1;
-        var typeFilter = entry.Value.Item2;
-        if (typeFilter != null && System.Array.IndexOf(typeFilter, compType) < 0) continue;
-
-        object value = null;
-        for (int i = 0; i < aliases.Length && value == null; i++)
-            value = getField(component, aliases[i]) ?? getProp(component, aliases[i]);
-
-        for (int i = 0; i < aliases.Length && value == null; i++)
-            value = findFieldDeep(component, aliases[i], MAX_DEPTH, new System.Collections.Generic.HashSet<object>());
-
-        if (value != null)
-            result[entry.Key] = toJsonSafe(value, MAX_DEPTH, new System.Collections.Generic.HashSet<object>());
-    }
-
-    return result;
-});
-
-var hasRequiredComponents = new System.Func<UnityEngine.GameObject, bool>((go) => {
+var hasRequired = new System.Func<UnityEngine.GameObject,bool>(go => {
     foreach (var wanted in REQUIRED_COMPONENTS) {
         var found = false;
+
         foreach (var c in go.GetComponents<UnityEngine.Component>()) {
-            if (c != null && c.GetType().Name == wanted) { found = true; break; }
+            if (c == null) continue;
+
+            var type = c.GetType();
+
+            if (type.Name == wanted || type.FullName == wanted) {
+                found = true;
+                break;
+            }
+
+            if (wanted == "Outlinable" && type.FullName == "EPOOutline.Outlinable")
+                found = true;
         }
+
         if (!found) return false;
     }
+
     return true;
 });
 
-var matchesName = new System.Func<UnityEngine.GameObject, bool>((go) => {
-    if (go == null || NAME_FILTERS.Length == 0) return false;
-    foreach (var filter in NAME_FILTERS) {
-        if (!string.IsNullOrEmpty(filter) && go.name.IndexOf(filter, System.StringComparison.OrdinalIgnoreCase) >= 0)
+var nameMatch = new System.Func<UnityEngine.GameObject,bool>(go => {
+    if (go == null) return false;
+
+    foreach (var s in NAME_FILTERS) {
+        if (!string.IsNullOrEmpty(s) && go.name.IndexOf(s, StringComparison.OrdinalIgnoreCase) >= 0)
             return true;
     }
+
     return false;
 });
 
 var matches = new System.Collections.Generic.List<UnityEngine.Transform>();
-var stack = new System.Collections.Generic.Stack<UnityEngine.Transform>();
-foreach (var root in roots) stack.Push(root.transform);
+var walk = new System.Collections.Generic.Stack<UnityEngine.Transform>();
 
-while (stack.Count > 0) {
-    var current = stack.Pop();
-    var go = current.gameObject;
-    if (hasRequiredComponents(go) || matchesName(go)) matches.Add(current);
-    for (int i = 0; i < current.childCount; i++) stack.Push(current.GetChild(i));
+foreach (var root in roots)
+    walk.Push(root.transform);
+
+while (walk.Count > 0) {
+    var t = walk.Pop();
+    var go = t.gameObject;
+
+    if (hasRequired(go) || nameMatch(go))
+        matches.Add(t);
+
+    for (int i = 0; i < t.childCount; i++)
+        walk.Push(t.GetChild(i));
 }
 
 var mgr = UnityEngine.Object.FindObjectOfType<ES3Internal.ES3ReferenceMgrBase>();
 var features = new System.Collections.Generic.List<object>();
 
 for (int index = 0; index < matches.Count; index++) {
-    var transform = matches[index];
-    var go = transform.gameObject;
+    var t = matches[index];
+    var go = t.gameObject;
 
-    long es3 = -1;
-    if (mgr != null) { try { es3 = mgr.Get(go); } catch { } }
+    var properties = new System.Collections.Generic.Dictionary<string,object>();
 
-    var pathParts = new System.Collections.Generic.List<string>();
-    for (var parent = transform.parent; parent != null; parent = parent.parent) pathParts.Add(parent.name);
-    pathParts.Reverse();
-    var path = string.Join("/", pathParts.ToArray());
+    if (EXPORT_ES3 && mgr != null) {
+        try {
+            var id = mgr.Get(go);
+            if (id >= 0) properties["es3ref"] = id;
+        } catch {}
+    }
 
-    var properties = new System.Collections.Generic.Dictionary<string, object>();
-    if (EXPORT_ES3 && es3 >= 0) properties["es3ref"] = es3;
     properties["name"] = go.name;
-    properties["path"] = path;
-    if (EXPORT_ACTIVE) properties["active"] = go.activeSelf;
-    if (EXPORT_SCENE) properties["scene"] = scene.name;
+
+    var path = new System.Collections.Generic.List<string>();
+    for (var p = t.parent; p != null; p = p.parent)
+        path.Add(p.name);
+
+    path.Reverse();
+    properties["path"] = string.Join("/", path.ToArray());
+
+    if (EXPORT_ACTIVE)
+        properties["active"] = go.activeSelf;
+
+    if (EXPORT_SCENE)
+        properties["scene"] = scene.name;
 
     if (EXPORT_COMPONENTS) {
         var names = new System.Collections.Generic.List<string>();
+
         foreach (var c in go.GetComponents<UnityEngine.Component>()) {
-            if (c != null && !(c is UnityEngine.Transform)) names.Add(c.GetType().Name);
+            if (c != null && !(c is UnityEngine.Transform))
+                names.Add(c.GetType().Name);
         }
+
         properties["components"] = names;
     }
 
-    var reflected = new System.Collections.Generic.Dictionary<string, object>();
-    string key = null, descriptionKey = null;
+    string key = null;
 
     foreach (var c in go.GetComponents<UnityEngine.Component>()) {
-        if (c == null || c is UnityEngine.Transform) continue;
+        if (c == null || c is UnityEngine.Transform)
+            continue;
 
-        foreach (var pair in getAllowedFields(c))
-            if (!reflected.ContainsKey(pair.Key)) reflected[pair.Key] = pair.Value;
+        var type = c.GetType();
 
-        if (key == null) key = extractLocKey(c, KEY_SOURCES);
-        if (descriptionKey == null) descriptionKey = extractLocKey(c, DESCRIPTION_KEY_SOURCES);
+        // First try the fields that normally contain the item's localized name.
+        var candidates = new[] {
+            "m_PartName",
+            "m_ItemName",
+            "m_SprayName",
+            "m_Name",
+            "Name"
+        };
+
+        foreach (var name in candidates) {
+            var value = field(c, name);
+
+            if (value == null)
+                value = prop(c, name);
+
+            if (value == null)
+                continue;
+
+            var k = findLocKey(value);
+
+            if (!string.IsNullOrEmpty(k)) {
+                key = k;
+                break;
+            }
+        }
+
+        if (!string.IsNullOrEmpty(key))
+            break;
+
+        // CarPartBehaviour -> Part -> m_PartName.
+        if (type.FullName == "Fuszerka.Vehicles.CarPartBehaviour") {
+            var part = prop(c, "Part");
+
+            if (part == null)
+                part = field(c, "Part");
+
+            if (part != null) {
+                var value = field(part, "m_PartName");
+
+                if (value != null)
+                    key = findLocKey(value);
+            }
+
+            if (!string.IsNullOrEmpty(key))
+                break;
+        }
+
+        // ItemIdentifier -> m_ItemDefinition -> Def.
+        if (type.Name.IndexOf("ItemIdentifier", StringComparison.OrdinalIgnoreCase) >= 0) {
+            var list = field(c, "m_ItemDefinition") as System.Collections.IEnumerable;
+
+            if (list != null) {
+                foreach (var item in list) {
+                    if (item == null) continue;
+
+                    var def = prop(item, "Def");
+
+                    if (def == null)
+                        def = field(item, "Def");
+
+                    if (def != null) {
+                        key = findLocKey(def);
+
+                        if (string.IsNullOrEmpty(key))
+                            key = findLocKey(prop(def, "Name"));
+
+                        if (!string.IsNullOrEmpty(key))
+                            break;
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(key))
+                break;
+        }
+
+        // Generic fallback: inspect the component itself for a LocalizedString.
+        key = findLocKey(c);
+
+        if (!string.IsNullOrEmpty(key))
+            break;
     }
 
-    foreach (var pair in reflected) properties[pair.Key] = pair.Value;
-    if (key != null) properties["key"] = key;
-    if (descriptionKey != null) properties["descriptionKey"] = descriptionKey;
+    if (!string.IsNullOrEmpty(key))
+        properties["key"] = key;
 
-    var pos = transform.position;
+    var pos = t.position;
+
     features.Add(new {
         type = "Feature",
-        geometry = new { type = "Point", coordinates = new[] { pos.x, pos.y, pos.z } },
+        geometry = new {
+            type = "Point",
+            coordinates = new[] { pos.x, pos.y, pos.z }
+        },
         properties = properties
     });
 
-    if ((index + 1) % 1000 == 0 || index + 1 == matches.Count) {
+    if ((index + 1) % 500 == 0 || index + 1 == matches.Count)
         System.IO.File.WriteAllText(
             progress,
-            "EXPORTING\n" + (index + 1) + "/" + matches.Count + " (" + ((index + 1) * 100 / matches.Count) + "%)\nOutput: " + output
+            "EXPORTING\n" +
+            (index + 1) + "/" + matches.Count + "\n" +
+            "Output: " + output
         );
-    }
 }
 
-var geojson = new { type = "FeatureCollection", features = features };
+var geojson = new {
+    type = "FeatureCollection",
+    features = features
+};
 
 var json = Newtonsoft.Json.JsonConvert.SerializeObject(
     geojson,
-    Newtonsoft.Json.Formatting.Indented,
-    new Newtonsoft.Json.JsonSerializerSettings { ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore }
+    Newtonsoft.Json.Formatting.Indented
 );
 
 System.IO.File.WriteAllText(output, json, System.Text.Encoding.UTF8);
-System.IO.File.WriteAllText(progress, "DONE\n" + matches.Count + "/" + matches.Count + " (100%)\nOutput: " + output);
+
+System.IO.File.WriteAllText(
+    progress,
+    "DONE\n" +
+    matches.Count + "/" + matches.Count + "\n" +
+    "Output: " + output
+);
 
 "DONE: " + matches.Count + " objects exported to " + output;
