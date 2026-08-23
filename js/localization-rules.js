@@ -4,12 +4,12 @@ function getKey(input) {
     let m, n;
 
     if (/^\(Part_Decoration\)_CustomLicensePlate(?:_|$)/.test(str)) return 'PartName_CustomLicensePlate_01_0';
-    if (m = str.match(/^\(Part_Decoration\)_(.+)$/)) {
-        n = m[1].replace(/(?:_\d+)+$/, '');
+    if (str.startsWith('(Part_Decoration)_')) {
+        n = str.slice('(Part_Decoration)_'.length).replace(/(?:_\d+)+$/, '');
         return `PartName_${n}`;
     }
-    if (m = str.match(/^\(NoShop_Part_Decoration\)_(.+)$/)) {
-        n = m[1].replace(/(?:_\d+)+$/, '');
+    if (str.startsWith('(NoShop_Part_Decoration)_')) {
+        n = str.slice('(NoShop_Part_Decoration)_'.length).replace(/(?:_\d+)+$/, '');
         return `PartName_${n}`;
     }
 
@@ -41,8 +41,8 @@ function getKey(input) {
     if (/^\(Interactable_Readable_Prop\)_AB_\d+_MissingCow(?:_\d+)?$/.test(str)) return 'IntEnv_Announcement';
     if (/^\(Interactable_Readable_Prop\)_AB_\d+_DrinkingBeer$/.test(str)) return 'FluidName_Beer';
     if (m = str.match(/^\(Interactable_Readable_Prop\)_AB_\d+_.*Recipe$/)) return 'IntEnv_Recipe';
-    if (m = str.match(/^\(Interactable_Diggable_Prop\)_PlantingPile_Treasure(?:_\d+)?$/)) return 'FluidName_BadProduct';
-    if (m = str.match(/^\(Interactable_Diggable_Prop\)_PlantingPile_Empty(?:_\d+)?$/)) return 'IntEnv_DirtPile';
+    if (/^\(Interactable_Diggable_Prop\)_PlantingPile_Treasure(?:_\d+)?$/.test(str)) return 'FluidName_BadProduct';
+    if (/^\(Interactable_Diggable_Prop\)_PlantingPile_Empty(?:_\d+)?$/.test(str)) return 'IntEnv_DirtPile';
     if (/^\(Interactable_Prop\)_Coin_Pickable(?:_\d+)?$/.test(str)) return 'IntEnv_Coin_1PolishZloty';
     if (m = str.match(/^\(Interactable_Prop\)_+([^_]+)/)) return `IntEnv_${m[1]}`;
     if (m = str.match(/^\(Interactable\)\s+(.+)/)) return `IntEnv_${m[1].trim().replace(/\s+/g, '')}`;
@@ -60,17 +60,22 @@ function getKey(input) {
         return `FluidName_${n.replace(/_\d+$/, '').replace(/\s+/g, '')}`;
     }
 
-    if (m = str.match(/^\(Part\)\s+(.+?)\s*-\s*(.+)$/)) {
-        const prefix = m[1].trim().replace(/\s+/g, '');
-        n = m[2].trim().replace(/(?:_\d+)+$/, '').replace(/\s+/g, '');
-        if (prefix === 'UrsusC355') {
-            if (n === 'SmallTire') n = 'FrontTire';
-            if (n === 'BigTire') n = 'RearTire';
+    if (str.startsWith('(Part)')) {
+        n = str.slice(6).trim();
+        const i = n.indexOf(' - ');
+        if (i >= 0) {
+            const prefix = n.slice(0, i).trim().replace(/\s+/g, '');
+            let name = n.slice(i + 3).trim().replace(/(?:_\d+)+$/, '');
+            if (prefix === 'UrsusC355' && /^Small\s+Tire$/i.test(name)) name = 'FrontTire';
+            else if (prefix === 'UrsusC355' && /^Big\s+Tire$/i.test(name)) name = 'RearTire';
+            else if (prefix === 'Zuk' && /^Air\s+Filter\s+Housing$/i.test(name)) name = 'AirFilter_Housing';
+            else name = name.replace(/\s+/g, '');
+            return `PartName_${prefix}_${name}`;
         }
-        return `PartName_${prefix}_${n}`;
+        n = n.replace(/(?:_\d+)+$/, '');
+        if (n === 'AirFilterHousing') return 'PartName_Zuk_AirFilter_Housing';
+        return `PartName_${n.replace(/\s+/g, '_')}`;
     }
-    if (str.startsWith('(Part)_')) return `PartName_${str.slice(7).replace(/(?:_\d+)+$/, '')}`;
-    if (m = str.match(/^\(Part\)\s+(.+)$/)) return `PartName_${m[1].trim().replace(/(?:_\d+)+$/, '').replace(/\s+/g, '')}`;
 
     if (/\bTire\b/i.test(str)) return 'PSI_Tire';
 
@@ -83,7 +88,12 @@ function getTitle(p) {
 
     if (k.startsWith('PartName_')) {
         const name = k.slice('PartName_'.length);
-        const variants = [name, name.replace(/TimingGearCover$/, 'TimingChainCover'), name.replace(/TimingGear$/, 'TimingGearBig'), name.replace(/^Battery$/, 'CarBattery')];
+        const variants = [
+            name,
+            name.replace(/TimingGearCover$/, 'TimingChainCover'),
+            name.replace(/TimingGear$/, 'TimingGearBig'),
+            name.replace(/^Battery$/, 'CarBattery')
+        ];
         for (const variant of variants) {
             keys.push(`PartName_${variant}`);
             keys.push(`PartName_Polonez_${variant}`);
