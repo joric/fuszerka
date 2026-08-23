@@ -70,6 +70,7 @@ function getKey(input) {
             if (prefix === 'UrsusC355' && /^Small\s+Tire$/i.test(name)) name = 'FrontTire';
             else if (prefix === 'UrsusC355' && /^Big\s+Tire$/i.test(name)) name = 'RearTire';
             else if (prefix === 'Zuk' && /^Air\s+Filter\s+Housing$/i.test(name)) name = 'AirFilter_Housing';
+            else if (prefix === 'Fiat126p' && /^Bumper\s+Rear$/i.test(name)) name = 'RearBumper';
             else name = name.replace(/\s+/g, '');
             return `PartName_${prefix}_${name}`;
         }
