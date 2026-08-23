@@ -195,7 +195,7 @@
       });
 
       if (this._count) {
-        this._count.textContent = keywords.length === 0 ? '' : matchCount + ' markers';
+        this._count.textContent = keywords.length === 0 ? '' : matchCount + ' found';
       }
 
       if (typeof this.options.onFilter === 'function') {
