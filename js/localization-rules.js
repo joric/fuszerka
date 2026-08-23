@@ -1,7 +1,16 @@
 function getKey(input) {
     if (!input || typeof input !== 'string') return '';
     const str = input.trim().replace(/\(Clone\)/g, '').trim();
-    let m;
+    let m, n;
+
+    if (str.startsWith('(Part_Decoration)_')) {
+        n = str.slice('(Part_Decoration)_'.length).replace(/(?:_\d+)+$/, '');
+        return `PartName_Decoration_${n}`;
+    }
+    if (str.startsWith('(NoShop_Part_Decoration)_')) {
+        n = str.slice('(NoShop_Part_Decoration)_'.length).replace(/(?:_\d+)+$/, '');
+        return `PartName_${n}`;
+    }
 
     if (str.startsWith('(Grabbable_Collectable_Prop)_Mushroom')) return 'intEnv_Mushroom';
     if (/^\(Prop\)_Brick(?:_|$)/.test(str)) return 'IntEnv_Brick';
@@ -9,21 +18,23 @@ function getKey(input) {
     if (/^\(Grabbable_Collectable_Prop\)_FireWood(?:_|$)/.test(str)) return 'ShopItem_WoodLog_Name';
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_Animal_([^_]+)/)) return `IntEnv_${m[1]}`;
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_([^_]+)/)) return `IntEnv_${m[1]}`;
+    if (/^\(Grabbable_Prop\)_Plaid(?:_|$)/.test(str)) return 'PSI_FloorCover';
+    if (/^\(Grabbable_Prop\)_Barrier(?:_|$)/.test(str)) return 'ShopItem_MetalFence_Name';
     if (/^\(Grabbable_Prop\)_Brick(?:_|$)/.test(str)) return 'IntEnv_Brick';
     if (/^\(Grabbable_Prop\)_QuestPlank(?:_|$)/.test(str)) return 'IntEnv_WoodenPlank';
     if (/^\(Grabbable_Prop\)_Crate(?:_|$)/.test(str)) return 'IntEnv_WoodenCrate';
     if (m = str.match(/^\(Grabbable_Prop\)_DEMOUTABLE_([^_]+)/)) return `ShopItem_${m[1]}_Name`;
     if (m = str.match(/^\(Grabbable_Prop\)_(.+)$/)) {
-        const name = m[1].replace(/(?:_\d+)+$/, '');
-        if (name === 'PlankPanel') return 'IntEnv_WoodenPanel';
-        if (name === 'Cardboard_Box') return 'IntEnv_CardboardBox';
-        return `ShopItem_${name}_Name`;
+        n = m[1].replace(/(?:_\d+)+$/, '');
+        if (n === 'PlankPanel') return 'IntEnv_WoodenPanel';
+        if (n === 'Cardboard_Box') return 'IntEnv_CardboardBox';
+        return `ShopItem_${n}_Name`;
     }
 
     if (m = str.match(/^\(Grabbable_Tool\)__+(.+?)(?:_\d+)?$/)) {
-        const name = m[1].trim().replace(/\s+/g, '');
-        if (name === 'GrinderDisc') return 'ToolName_GrindingDisc';
-        return `ToolName_${name}`;
+        n = m[1].trim().replace(/\s+/g, '');
+        if (n === 'GrinderDisc') return 'ToolName_GrindingDisc';
+        return `ToolName_${n}`;
     }
 
     if (/^\(Interactable_Readable_Prop\)_AB_\d+_DrinkingBeer$/.test(str)) return 'FluidName_Beer';
@@ -35,32 +46,29 @@ function getKey(input) {
     if (m = str.match(/^\(Interactable\)\s+(.+)/)) return `IntEnv_${m[1].trim().replace(/\s+/g, '')}`;
 
     if (m = str.match(/^\(Tool\)\s+Paint Spray\s*-\s*(.+)$/)) {
-        const name = m[1].trim().replace(/\s+/g, '');
-        return /_\d+$/.test(name) ? `PaintColor_${name.replace(/_\d+$/, '')}` : `SprayName_${name}`;
+        n = m[1].trim().replace(/\s+/g, '');
+        return /_\d+$/.test(n) ? `PaintColor_${n.replace(/_\d+$/, '')}` : `SprayName_${n}`;
     }
     if (m = str.match(/^\(Tool\)_?(.+?)(?:_\d+)?$/)) return `ToolName_${m[1].trim().replace(/\s+/g, '')}`;
 
     if (m = str.match(/^\(Fluid\)\s+(.+)$/)) {
-        const name = m[1].trim();
-        if (/^Vodka(?:_\d+)?$/i.test(name)) return 'ProductName_Vodka_1';
-        if (/^.+\s+Bottle(?:_\d+)?$/i.test(name)) return `FluidName_${name.replace(/\s+Bottle(?:_\d+)?$/i, '').replace(/\s+/g, '')}`;
-        return `FluidName_${name.replace(/_\d+$/, '').replace(/\s+/g, '')}`;
+        n = m[1].trim();
+        if (/^Vodka(?:_\d+)?$/i.test(n)) return 'ProductName_Vodka_1';
+        if (/^.+\s+Bottle(?:_\d+)?$/i.test(n)) return `FluidName_${n.replace(/\s+Bottle(?:_\d+)?$/i, '').replace(/\s+/g, '')}`;
+        return `FluidName_${n.replace(/_\d+$/, '').replace(/\s+/g, '')}`;
     }
-
-    if (m = str.match(/^\((?:NoShop_Part_Decoration|Part_Decoration)\)_(.+)$/)) return `PartName_${m[1].replace(/_\d+$/, '')}`;
-    if (m = str.match(/^\((?:NoShop_Part_Decoration|Part_Decoration)\)\s+(.+)$/)) return `PartName_${m[1].replace(/_\d+$/, '')}`;
 
     if (m = str.match(/^\(Part\)\s+(.+?)\s*-\s*(.+)$/)) {
         const prefix = m[1].trim().replace(/\s+/g, '');
-        let name = m[2].trim().replace(/_\d+$/, '').replace(/\s+/g, '');
+        n = m[2].trim().replace(/(?:_\d+)+$/, '').replace(/\s+/g, '');
         if (prefix === 'UrsusC355') {
-            if (name === 'SmallTire') name = 'FrontTire';
-            if (name === 'BigTire') name = 'RearTire';
+            if (n === 'SmallTire') n = 'FrontTire';
+            if (n === 'BigTire') n = 'RearTire';
         }
-        return `PartName_${prefix}_${name}`;
+        return `PartName_${prefix}_${n}`;
     }
-    if (str.startsWith('(Part)_')) return `PartName_${str.slice(7).replace(/_\d+$/, '')}`;
-    if (m = str.match(/^\(Part\)\s+(.+)$/)) return `PartName_${m[1].trim().replace(/_\d+$/, '').replace(/\s+/g, '')}`;
+    if (str.startsWith('(Part)_')) return `PartName_${str.slice(7).replace(/(?:_\d+)+$/, '')}`;
+    if (m = str.match(/^\(Part\)\s+(.+)$/)) return `PartName_${m[1].trim().replace(/(?:_\d+)+$/, '').replace(/\s+/g, '')}`;
 
     if (/\bTire\b/i.test(str)) return 'PSI_Tire';
 
