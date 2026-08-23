@@ -19,6 +19,7 @@ function getKey(input) {
     }
     if (m = str.match(/^\(Tool\)_?(.+?)(?:_\d+)?$/)) return `ToolName_${m[1].trim().replace(/\s+/g, '')}`;
     if (m = str.match(/^\(Fluid\)\s+(.+?)(?:_\d+)?$/)) return `FluidName_${m[1].replace(/\s+/g, '')}`;
+    if (m = str.match(/^\(NoShop_Part_Decoration\)\s+(.+?)(?:_\d+)$/)) return `PartName_${m[1]}`;
 
     if (str.startsWith('(Part)_')) return `PartName_${str.slice(7).replace(/_\d+$/, '')}`;
     if (m = str.match(/^\(Part\)\s+([^-]+?)\s*-\s*(.+)$/)) {
