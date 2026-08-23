@@ -36,7 +36,12 @@ function getTitle(p) {
 
     if (k.startsWith('PartName_')) {
         const name = k.slice('PartName_'.length);
-        const variants = [name, name.replace(/TimingGearCover$/, 'TimingChainCover'), name.replace(/TimingGear$/, 'TimingGearBig')];
+        const variants = [
+            name,
+            name.replace(/TimingGearCover$/, 'TimingChainCover'),
+            name.replace(/TimingGear$/, 'TimingGearBig'),
+            name.replace(/^Battery$/, 'CarBattery')
+        ];
         for (const variant of variants) {
             keys.push(`PartName_${variant}`, `PSI_${variant}`, `PartName_Polonez_${variant}`, `PartName_Fiat126p_${variant}`);
         }
