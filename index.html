@@ -23,6 +23,7 @@
 
 <!-- Reusable keyword-filter search control (rounded corners, responsive width, autofocus) -->
 <script src="js/keyword-filter-search.js"></script>
+<script src="js/localization-rules.js"></script>
 
 <style>
 html, body, #map {
@@ -44,11 +45,9 @@ html, body, #map {
 
 <div id="map"></div>
 
-<!--
 <select id="language-selector">
   <option>en</option>
 </select>
--->
 
 <script>
 let tileset_base = location.protocol === 'file:' ? '../fuszerka_tileset' : 'https://joric.github.io/fuszerka_tileset';
@@ -65,18 +64,13 @@ function saveSettings() {
   localStorage.setItem(localDataName, JSON.stringify(localData));
 }
 
-function getTitle(feature) {
-  let p = feature.properties || {};
-  let name = lang[p.key] || '';
-  let desc = lang[p.descriptionKey] || '';
-  //return desc ? `${name} (${desc})` : name;
-  return name;
-}
+
+const getLocalizedTitle = getTitle
 
 // Builds the searchable text blob for a marker (title/name/itemName/path).
 function getSearchableText(marker) {
   const p = marker.feature ? marker.feature.properties : {};
-  return [p.title, p.name, p.itemName, p.path].filter(str => str && String(str).trim()).join(' ');
+  return [getLocalizedTitle(p), p.title, p.name, p.itemName, p.path].filter(str => str && String(str).trim()).join(' ');
 }
 
 window.onload = function() {
@@ -217,7 +211,7 @@ window.onload = function() {
               pointToLayer: (feature, latlng) => {
                   const marker = L.marker(latlng);
                   marker.bindPopup(() => `<pre style="white-space:pre-wrap;overflow-wrap:anywhere;width:320px">${JSON.stringify(feature, null, 2)}</pre>`);
-                  marker.bindTooltip(()=> feature.properties.title || feature.properties.itemName || feature.properties.name ||'');
+                  marker.bindTooltip(()=> getTitle(feature.properties) || feature.properties.title || feature.properties.itemName || feature.properties.name ||'');
                   return marker;
               }
           });
@@ -226,7 +220,6 @@ window.onload = function() {
           allMarkers = geoJsonLayer.getLayers();
       });
 
-/*
   let lang_list = {
     "en": "en",
     "fr": "fr",
@@ -248,7 +241,7 @@ window.onload = function() {
   fetch(`data/Localization/${lang_list[settings.language]}.json`).then(r=>r.json()).then(data=>{
     lang = data;
   });
-*/
+
 };
 
 </script>
