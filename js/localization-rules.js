@@ -3,6 +3,7 @@ function getKey(input) {
     const str = input.trim().replace(/\(Clone\)/g, '').trim();
     let m, n;
 
+    if (/^\(Part_Decoration\)_CustomLicensePlate(?:_|$)/.test(str)) return 'PartName_CustomLicensePlate_01_0';
     if (str.startsWith('(Part_Decoration)_')) {
         n = str.slice('(Part_Decoration)_'.length).replace(/(?:_\d+)+$/, '');
         return `PartName_Decoration_${n}`;
@@ -81,12 +82,7 @@ function getTitle(p) {
 
     if (k.startsWith('PartName_')) {
         const name = k.slice('PartName_'.length);
-        const variants = [
-            name,
-            name.replace(/TimingGearCover$/, 'TimingChainCover'),
-            name.replace(/TimingGear$/, 'TimingGearBig'),
-            name.replace(/^Battery$/, 'CarBattery')
-        ];
+        const variants = [name, name.replace(/TimingGearCover$/, 'TimingChainCover'), name.replace(/TimingGear$/, 'TimingGearBig'), name.replace(/^Battery$/, 'CarBattery')];
         for (const variant of variants) {
             keys.push(`PartName_${variant}`);
             keys.push(`PartName_Polonez_${variant}`);
