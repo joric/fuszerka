@@ -9,26 +9,33 @@ function getKey(input) {
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_([^_]+)/)) return `IntEnv_${m[1]}`;
     if (/^\(Grabbable_Prop\)_Brick(?:_|$)/.test(str)) return 'IntEnv_Brick';
     if (m = str.match(/^\(Grabbable_Prop\)_DEMOUTABLE_([^_]+)/)) return `ShopItem_${m[1]}_Name`;
-    if (m = str.match(/^\(Grabbable_Prop\)_([^_]+(?:_[^_]+)*)$/)) {
+    if (m = str.match(/^\(Grabbable_Prop\)_(.+)$/)) {
         const name = m[1].replace(/(?:_\d+)+$/, '');
         if (name === 'PlankPanel') return 'IntEnv_WoodenPanel';
         if (name === 'Cardboard_Box') return 'IntEnv_CardboardBox';
         return `ShopItem_${name}_Name`;
     }
-    if (/^\(Interactable_Readable_Prop\)_AB_\d+_.*Recipe$/.test(str)) return 'IntEnv_Recipe';
+
+    if (m = str.match(/^\(Interactable_Readable_Prop\)_AB_\d+_.*Recipe$/)) return 'IntEnv_Recipe';
+    if (m = str.match(/^\(Interactable_Diggable_Prop\)_PlantingPile_Treasure(?:_\d+)?$/)) return 'FluidName_BadProduct';
+    if (m = str.match(/^\(Interactable_Diggable_Prop\)_PlantingPile_Empty(?:_\d+)?$/)) return 'IntEnv_DirtPile';
     if (m = str.match(/^\(Interactable_Prop\)_+([^_]+)/)) return `IntEnv_${m[1]}`;
     if (m = str.match(/^\(Interactable\)\s+(.+)/)) return `IntEnv_${m[1].trim().replace(/\s+/g, '')}`;
+
     if (m = str.match(/^\(Tool\)\s+Paint Spray\s*-\s*(.+)$/)) {
         const name = m[1].trim().replace(/\s+/g, '');
         return /_\d+$/.test(name) ? `PaintColor_${name.replace(/_\d+$/, '')}` : `SprayName_${name}`;
     }
     if (m = str.match(/^\(Tool\)_?(.+?)(?:_\d+)?$/)) return `ToolName_${m[1].trim().replace(/\s+/g, '')}`;
+
     if (m = str.match(/^\(Fluid\)\s+(.+)$/)) {
-        let name = m[1].replace(/_\d+$/, '').trim();
-        name = name.replace(/\s+Bottle$/i, '').trim();
+        let name = m[1].replace(/_\d+$/, '').trim().replace(/\s+Bottle$/i, '').trim();
         return `FluidName_${name.replace(/\s+/g, '')}`;
     }
-    if (m = str.match(/^\(NoShop_Part_Decoration\)\s+(.+?)(?:_\d+)$/)) return `PartName_${m[1]}`;
+
+    if (m = str.match(/^\((?:NoShop_Part_Decoration|Part_Decoration)\)_(.+)$/)) return `PartName_${m[1].replace(/_\d+$/, '')}`;
+    if (m = str.match(/^\((?:NoShop_Part_Decoration|Part_Decoration)\)\s+(.+)$/)) return `PartName_${m[1].replace(/_\d+$/, '')}`;
+
     if (str.startsWith('(Part)_')) return `PartName_${str.slice(7).replace(/_\d+$/, '')}`;
     if (m = str.match(/^\(Part\)\s+([^-]+?)\s*-\s*(.+)$/)) {
         const name = m[1].trim().replace(/\s+/g, '');
