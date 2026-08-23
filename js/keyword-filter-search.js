@@ -38,9 +38,8 @@
   background: #fff;
   display: flex;
   align-items: center;
-  border-radius: 8px;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
   overflow: hidden;
+  border-radius: 8px;
 }
 
 .keyword-filter-control .keyword-filter-input {
@@ -72,7 +71,6 @@
   line-height: 1;
   padding: 8px 10px;
   color: #666;
-  border-radius: 0 8px 8px 0;
 }
 
 .keyword-filter-control .keyword-filter-clear:hover {
@@ -110,7 +108,7 @@
       this._map = map;
       injectStyleOnce();
 
-      const container = L.DomUtil.create('div', 'leaflet-control keyword-filter-control');
+      const container = L.DomUtil.create('div', 'leaflet-control keyword-filter-control leaflet-bar');
       container.innerHTML =
         '<input type="text" class="keyword-filter-input" autocomplete="off" placeholder="' +
         this.options.placeholder + '">' +
