@@ -17,6 +17,7 @@ function getKey(input) {
     if (/^\(Prop\)_Brick(?:_|$)/.test(str)) return 'IntEnv_Brick';
     if (/^\(Grabbable_Prop\)_BeerCrate(?:_|$)/.test(str)) return 'FluidName_Beer';
     if (/^\(Grabbable_Collectable_Prop\)_FireWood(?:_|$)/.test(str)) return 'ShopItem_WoodLog_Name';
+    if (/^\(Grabbable_Prop\)_Taburet(?:_\d+)?$/.test(str)) return 'PSI_Seat';
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_Animal_([^_]+)/)) return `IntEnv_${m[1]}`;
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_([^_]+)/)) return `IntEnv_${m[1]}`;
     if (/^\(Grabbable_Prop\)_Plaid(?:_\d+)?$/.test(str)) return 'PSI_FloorCover';
