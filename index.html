@@ -97,22 +97,21 @@ function saveSettings() {
   localStorage.setItem(localDataName, JSON.stringify(localData));
 }
 
-function getTooltipText(p) {
-  let title = getLocalizedTitle(p);
-  if (title && p.key) return `<b>${title}</b><br>${p.key||p.name}`;
-  if (title) return `${title}<br>${p.key||p.name}`;
-  return p.name;
-}
-
 function getLocalizedTitle(p) {
-  let title = p.key ? lang[p.key] : getTitle(p);
+  let title = p.key ? `<b>${lang[p.key]}</b>` : getTitle(p);
   if (title && title != p.name) return title;
   return title||'';
 }
 
-function getTitleText(p) {
-  let title = p.key ? lang[p.key] : getTitle(p);
-  return [title, p.key, p.name].filter(str => str && String(str).trim()).join('<br>');
+function getTooltipText(p) {
+  let title = getLocalizedTitle(p);
+  if (title) return `${title}<br>${p.key||p.name}`;
+  return p.name;
+}
+
+function getPopupText(p) {
+  let title = getLocalizedTitle(p);
+  return [title, p.key, `<small>${p.name}</small>`].filter(str => str && String(str).trim()).join('<br>');
 }
 
 
@@ -293,8 +292,6 @@ window.onload = function() {
 
                     let title = getLocalizedTitle(p);
 
-                    if (title && p.key) title = `<b>${title}</b>`;
-
                     let marker = L.marker(latlng, {
                       icon: L.divIcon({
                         html: `
@@ -311,7 +308,7 @@ window.onload = function() {
 
 
                     //marker.bindPopup(() => `${getLocalizedTitle(feature.properties)}<pre style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${JSON.stringify(feature, null, 2)}</pre>`);
-                    marker.bindPopup(() => getTitleText(p)+`<hr><div style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${feature.properties.path}</div>`, {minWidth:320, maxWidth:400});
+                    marker.bindPopup(() => getPopupText(p)+`<hr><div style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${feature.properties.path}</div>`, {minWidth:320, maxWidth:400});
                     marker.bindTooltip(()=> getTooltipText(p), {offset: [16,-20]});
                     return marker;
                 }
