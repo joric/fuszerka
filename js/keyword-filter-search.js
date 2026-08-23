@@ -38,7 +38,7 @@
   background: #fff;
   display: flex;
   align-items: center;
-  border-radius: 16px;
+  border-radius: 8px;
   box-shadow: 0 1px 1px rgba(0,0,0,0.1);
   overflow: hidden;
 }
@@ -46,7 +46,7 @@
 .keyword-filter-control .keyword-filter-input {
   border: none;
   outline: none;
-  padding: 8px 10px;
+  padding: 8px 12px;
   font-size: 14px;
   font-family: inherit;
   width: 100px;
