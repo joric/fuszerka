@@ -112,7 +112,7 @@ window.onload = function() {
       map.unproject([tileSize, 0], 0)
   );
 
-  map.setMaxBounds(bounds);
+  map.setMaxBounds(bounds.pad(1.5));
 
   try {
     L.control.mousePosition({wrapLng: false, lngFirst: true, lngFormatter:lng=>Math.round(lng), latFormatter:lat=>Math.round(lat)}).addTo(map);
