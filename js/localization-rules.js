@@ -5,9 +5,12 @@ function getKey(input) {
 
     if (str.startsWith('(Grabbable_Collectable_Prop)_Mushroom')) return 'intEnv_Mushroom';
     if (/^\(Prop\)_Brick(?:_|$)/.test(str)) return 'IntEnv_Brick';
+    if (/^\(Grabbable_Prop\)_BeerCrate(?:_|$)/.test(str)) return 'FluidName_Beer';
+    if (/^\(Grabbable_Collectable_Prop\)_FireWood(?:_|$)/.test(str)) return 'ShopItem_WoodLog_Name';
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_Animal_([^_]+)/)) return `IntEnv_${m[1]}`;
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_([^_]+)/)) return `IntEnv_${m[1]}`;
     if (/^\(Grabbable_Prop\)_Brick(?:_|$)/.test(str)) return 'IntEnv_Brick';
+    if (/^\(Grabbable_Prop\)_QuestPlank(?:_|$)/.test(str)) return 'IntEnv_WoodenPlank';
     if (m = str.match(/^\(Grabbable_Prop\)_DEMOUTABLE_([^_]+)/)) return `ShopItem_${m[1]}_Name`;
     if (m = str.match(/^\(Grabbable_Prop\)_(.+)$/)) {
         const name = m[1].replace(/(?:_\d+)+$/, '');
@@ -16,6 +19,7 @@ function getKey(input) {
         return `ShopItem_${name}_Name`;
     }
 
+    if (/^\(Interactable_Readable_Prop\)_AB_\d+_DrinkingBeer$/.test(str)) return 'FluidName_Beer';
     if (m = str.match(/^\(Interactable_Readable_Prop\)_AB_\d+_.*Recipe$/)) return 'IntEnv_Recipe';
     if (m = str.match(/^\(Interactable_Diggable_Prop\)_PlantingPile_Treasure(?:_\d+)?$/)) return 'FluidName_BadProduct';
     if (m = str.match(/^\(Interactable_Diggable_Prop\)_PlantingPile_Empty(?:_\d+)?$/)) return 'IntEnv_DirtPile';
@@ -29,22 +33,29 @@ function getKey(input) {
     if (m = str.match(/^\(Tool\)_?(.+?)(?:_\d+)?$/)) return `ToolName_${m[1].trim().replace(/\s+/g, '')}`;
 
     if (m = str.match(/^\(Fluid\)\s+(.+)$/)) {
-        let name = m[1].replace(/_\d+$/, '').trim().replace(/\s+Bottle$/i, '').trim();
-        return `FluidName_${name.replace(/\s+/g, '')}`;
+        const name = m[1].trim();
+        if (/^Vodka(?:_\d+)?$/i.test(name)) return 'ProductName_Vodka_1';
+        if (/^.+\s+Bottle(?:_\d+)?$/i.test(name)) return `FluidName_${name.replace(/\s+Bottle(?:_\d+)?$/i, '').replace(/\s+/g, '')}`;
+        return `FluidName_${name.replace(/_\d+$/, '').replace(/\s+/g, '')}`;
     }
 
     if (m = str.match(/^\((?:NoShop_Part_Decoration|Part_Decoration)\)_(.+)$/)) return `PartName_${m[1].replace(/_\d+$/, '')}`;
     if (m = str.match(/^\((?:NoShop_Part_Decoration|Part_Decoration)\)\s+(.+)$/)) return `PartName_${m[1].replace(/_\d+$/, '')}`;
 
-    if (str.startsWith('(Part)_')) return `PartName_${str.slice(7).replace(/_\d+$/, '')}`;
-    if (m = str.match(/^\(Part\)\s+([^-]+?)\s*-\s*(.+)$/)) {
-        const name = m[1].trim().replace(/\s+/g, '');
-        const desc = m[2].trim().replace(/\s+/g, '');
-        return `PartName_${name}_${desc}`;
+    if (m = str.match(/^\(Part\)\s+(.+?)\s*-\s*(.+)$/)) {
+        const prefix = m[1].trim().replace(/\s+/g, '');
+        let name = m[2].trim().replace(/_\d+$/, '').replace(/\s+/g, '');
+        if (prefix === 'UrsusC355') {
+            if (name === 'SmallTire') name = 'FrontTire';
+            if (name === 'BigTire') name = 'RearTire';
+        }
+        return `PartName_${prefix}_${name}`;
     }
-    if (m = str.match(/^\(Part\)\s+([^_]+)_\d+$/)) return `PartName_${m[1]}`;
-    if (m = str.match(/^\(Part\)\s+([^_]+)$/)) return `PartName_${m[1]}`;
-    if (str.startsWith('(Part) ')) return `PartName_${str.slice(7).replace(/\s+/g, '')}`;
+
+    if (str.startsWith('(Part)_')) return `PartName_${str.slice(7).replace(/_\d+$/, '')}`;
+    if (m = str.match(/^\(Part\)\s+(.+)$/)) return `PartName_${m[1].trim().replace(/_\d+$/, '').replace(/\s+/g, '')}`;
+
+    if (/\bTire\b/i.test(str)) return 'PSI_Tire';
 
     return str;
 }
@@ -61,15 +72,19 @@ function getTitle(p) {
             name.replace(/TimingGear$/, 'TimingGearBig'),
             name.replace(/^Battery$/, 'CarBattery')
         ];
-        for (const variant of variants)
-            keys.push(`PartName_${variant}`, `PSI_${variant}`, `PartName_Polonez_${variant}`, `PartName_Fiat126p_${variant}`);
+        for (const variant of variants) {
+            keys.push(`PartName_${variant}`);
+            keys.push(`PartName_Polonez_${variant}`);
+            keys.push(`PartName_Fiat126p_${variant}`);
+        }
     }
 
-    for (const key of keys)
+    for (const key of keys) {
         for (const postfix of ['', '_2', '_01', '_02', '_03', '_04', '_R']) {
             const value = lang[key + postfix];
             if (value) return value;
         }
+    }
 
     return p.name;
 }

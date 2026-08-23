@@ -213,7 +213,8 @@ window.onload = function() {
               coordsToLatLng: coords => L.latLng(coords[2], coords[0]),
               pointToLayer: (feature, latlng) => {
                   const marker = L.marker(latlng);
-                  marker.bindPopup(() => `<pre style="white-space:pre-wrap;overflow-wrap:anywhere;width:320px">${JSON.stringify(feature, null, 2)}</pre>`);
+                  //marker.bindPopup(() => `${getLocalizedTitle(feature.properties)}<pre style="white-space:pre-wrap;overflow-wrap:anywhere;width:320px">${JSON.stringify(feature, null, 2)}</pre>`);
+                  marker.bindPopup(() => `${getLocalizedTitle(feature.properties)}<hr><div style="white-space:pre-wrap;overflow-wrap:anywhere;width:320px">${feature.properties.path}</div>`);
                   marker.bindTooltip(()=> getLocalizedTitle(feature.properties) || feature.properties.name || '');
                   return marker;
               }
