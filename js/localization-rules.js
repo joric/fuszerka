@@ -6,6 +6,9 @@ function getKey(input) {
     if (m = /^\(Grabbable_Collectable_Prop\)_Animal_([^_]+)/.exec(str))
         return `IntEnv_${m[1]}`;
 
+    if (m = /^\(Grabbable_Collectable_Prop\)_Mushroom(?:_\d+)*.*$/.exec(str))
+        return 'IntEnv_Mushroom';
+
     if (m = /^\(Grabbable_Collectable_Prop\)_([^_]+)/.exec(str))
         return `IntEnv_${m[1]}`;
 
@@ -14,6 +17,9 @@ function getKey(input) {
 
     if (m = /^\(Grabbable_Prop\)_([^_]+)(?:_\d+)?/.exec(str))
         return `ShopItem_${m[1]}_Name`;
+
+    if (m = /^\(Interactable_Readable_Prop\)_AB_\d+_.*Recipe$/.exec(str))
+        return 'IntEnv_Recipe';
 
     if (m = /^\(Interactable_Prop\)__([^_]+)(?:_.*)?$/.exec(str))
         return `IntEnv_${m[1]}`;
@@ -27,6 +33,12 @@ function getKey(input) {
         return named ? `PaintColor_${named[1]}` : `SprayName_${color.replace(/\s+/g, '')}`;
     }
 
+    if (m = /^\(Tool\)_?(.+?)(?:_\d+)?$/.exec(str))
+        return `ToolName_${m[1].trim().replace(/\s+/g, '')}`;
+
+    if (m = /^\(Fluid\)\s+(.+?)(?:_\d+)?$/.exec(str))
+        return `FluidName_${m[1].replace(/\s+/g, '')}`;
+
     if (m = /^\(Part\)\s+([^-]+?)\s*-\s*([^_]+?)(?:_\d+)?$/.exec(str)) {
         const name = m[1].trim().replace(/\s+/g, '');
         const desc = m[2].trim().replace(/\s+/g, '');
@@ -34,8 +46,8 @@ function getKey(input) {
     }
 
     if (str.startsWith('(Part)_')) {
-        const name = str.slice(7).replace(/-/g, '_').replace(/\(\w+\)$/, '');
-        return `PartName_${name.replace(/_\d+$/, '')}`;
+        const name = str.slice(7).replace(/\(Clone\)$/, '').replace(/-/g, '_').replace(/_\d+$/, '');
+        return `PartName_${name}`;
     }
 
     if (m = /^\(Part\)\s+([^_(]+)(?:_(\d+))?(?:\(Clone\))?$/.exec(str))

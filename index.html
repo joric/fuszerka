@@ -64,8 +64,11 @@ function saveSettings() {
   localStorage.setItem(localDataName, JSON.stringify(localData));
 }
 
-
-const getLocalizedTitle = getTitle
+function getLocalizedTitle(p) {
+  const title = getTitle(p);
+  if (title && title != p.name) return `<b>${title}</b><br>${p.name}`;
+  return title;
+}
 
 // Builds the searchable text blob for a marker (title/name/itemName/path).
 function getSearchableText(marker) {
@@ -211,7 +214,7 @@ window.onload = function() {
               pointToLayer: (feature, latlng) => {
                   const marker = L.marker(latlng);
                   marker.bindPopup(() => `<pre style="white-space:pre-wrap;overflow-wrap:anywhere;width:320px">${JSON.stringify(feature, null, 2)}</pre>`);
-                  marker.bindTooltip(()=> getTitle(feature.properties) || feature.properties.title || feature.properties.itemName || feature.properties.name ||'');
+                  marker.bindTooltip(()=> getLocalizedTitle(feature.properties) || feature.properties.name || '');
                   return marker;
               }
           });
