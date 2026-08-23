@@ -99,19 +99,19 @@ function saveSettings() {
 
 function getTooltipText(p) {
   let title = getLocalizedTitle(p);
-  if (title) return `<b>${title}</b><br>${p.key||p.name}`;
+  if (title && p.key) return `<b>${title}</b><br>${p.key||p.name}`;
+  if (title) return `${title}<br>${p.key||p.name}`;
   return p.name;
 }
 
 function getLocalizedTitle(p) {
   let title = p.key ? lang[p.key] : getTitle(p);
-  if (title && title != p.name) return title;//`<b>${title}</b><br>${p.name}<br>${p.key||''}`;
+  if (title && title != p.name) return title;
   return title||'';
 }
 
 function getTitleText(p) {
   let title = p.key ? lang[p.key] : getTitle(p);
-  if (title) title = `<b>${title}</b>`;
   return [title, p.key, p.name].filter(str => str && String(str).trim()).join('<br>');
 }
 
@@ -289,7 +289,11 @@ window.onload = function() {
                 pointToLayer: (feature, latlng) => {
                     //const marker = L.marker(latlng);
 
-                    let title = getLocalizedTitle(feature.properties);
+                    let p = feature.properties;
+
+                    let title = getLocalizedTitle(p);
+
+                    if (title && p.key) title = `<b>${title}</b>`;
 
                     let marker = L.marker(latlng, {
                       icon: L.divIcon({
@@ -307,8 +311,8 @@ window.onload = function() {
 
 
                     //marker.bindPopup(() => `${getLocalizedTitle(feature.properties)}<pre style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${JSON.stringify(feature, null, 2)}</pre>`);
-                    marker.bindPopup(() => getTitleText(feature.properties)+`<hr><div style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${feature.properties.path}</div>`, {minWidth:320, maxWidth:400});
-                    marker.bindTooltip(()=> getTooltipText(feature.properties), {offset: [16,-20]});
+                    marker.bindPopup(() => getTitleText(p)+`<hr><div style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${feature.properties.path}</div>`, {minWidth:320, maxWidth:400});
+                    marker.bindTooltip(()=> getTooltipText(p), {offset: [16,-20]});
                     return marker;
                 }
       });
