@@ -4,12 +4,12 @@ function getKey(input) {
     let m, n;
 
     if (/^\(Part_Decoration\)_CustomLicensePlate(?:_|$)/.test(str)) return 'PartName_CustomLicensePlate_01_0';
-    if (str.startsWith('(Part_Decoration)_')) {
-        n = str.slice('(Part_Decoration)_'.length).replace(/(?:_\d+)+$/, '');
-        return `PartName_Decoration_${n}`;
+    if (m = str.match(/^\(Part_Decoration\)_(.+)$/)) {
+        n = m[1].replace(/(?:_\d+)+$/, '');
+        return `PartName_${n}`;
     }
-    if (str.startsWith('(NoShop_Part_Decoration)_')) {
-        n = str.slice('(NoShop_Part_Decoration)_'.length).replace(/(?:_\d+)+$/, '');
+    if (m = str.match(/^\(NoShop_Part_Decoration\)_(.+)$/)) {
+        n = m[1].replace(/(?:_\d+)+$/, '');
         return `PartName_${n}`;
     }
 
@@ -19,11 +19,11 @@ function getKey(input) {
     if (/^\(Grabbable_Collectable_Prop\)_FireWood(?:_|$)/.test(str)) return 'ShopItem_WoodLog_Name';
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_Animal_([^_]+)/)) return `IntEnv_${m[1]}`;
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_([^_]+)/)) return `IntEnv_${m[1]}`;
-    if (/^\(Grabbable_Prop\)_Plaid(?:_|$)/.test(str)) return 'PSI_FloorCover';
-    if (/^\(Grabbable_Prop\)_Barrier(?:_|$)/.test(str)) return 'ShopItem_MetalFence_Name';
-    if (/^\(Grabbable_Prop\)_Brick(?:_|$)/.test(str)) return 'IntEnv_Brick';
-    if (/^\(Grabbable_Prop\)_QuestPlank(?:_|$)/.test(str)) return 'IntEnv_WoodenPlank';
-    if (/^\(Grabbable_Prop\)_Crate(?:_|$)/.test(str)) return 'IntEnv_WoodenCrate';
+    if (/^\(Grabbable_Prop\)_Plaid(?:_\d+)?$/.test(str)) return 'PSI_FloorCover';
+    if (/^\(Grabbable_Prop\)_(?:Barrier|HayBalesRail)(?:_\d+)?$/.test(str)) return 'ShopItem_MetalFence_Name';
+    if (/^\(Grabbable_Prop\)_Brick(?:_\d+)?$/.test(str)) return 'IntEnv_Brick';
+    if (/^\(Grabbable_Prop\)_QuestPlank(?:_\d+)?$/.test(str)) return 'IntEnv_WoodenPlank';
+    if (/^\(Grabbable_Prop\)_Crate(?:_\d+)?$/.test(str)) return 'IntEnv_WoodenCrate';
     if (m = str.match(/^\(Grabbable_Prop\)_DEMOUTABLE_([^_]+)/)) return `ShopItem_${m[1]}_Name`;
     if (m = str.match(/^\(Grabbable_Prop\)_(.+)$/)) {
         n = m[1].replace(/(?:_\d+)+$/, '');
@@ -38,6 +38,7 @@ function getKey(input) {
         return `ToolName_${n}`;
     }
 
+    if (/^\(Interactable_Readable_Prop\)_AB_\d+_MissingCow(?:_\d+)?$/.test(str)) return 'IntEnv_Announcement';
     if (/^\(Interactable_Readable_Prop\)_AB_\d+_DrinkingBeer$/.test(str)) return 'FluidName_Beer';
     if (m = str.match(/^\(Interactable_Readable_Prop\)_AB_\d+_.*Recipe$/)) return 'IntEnv_Recipe';
     if (m = str.match(/^\(Interactable_Diggable_Prop\)_PlantingPile_Treasure(?:_\d+)?$/)) return 'FluidName_BadProduct';
