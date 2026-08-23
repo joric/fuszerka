@@ -4,12 +4,14 @@ function getKey(input) {
     let m;
 
     if (str.startsWith('(Grabbable_Collectable_Prop)_Mushroom')) return 'intEnv_Mushroom';
+    if (/^\(Prop\)_Brick(?:_|$)/.test(str)) return 'IntEnv_Brick';
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_Animal_([^_]+)/)) return `IntEnv_${m[1]}`;
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_([^_]+)/)) return `IntEnv_${m[1]}`;
+    if (/^\(Grabbable_Prop\)_Brick(?:_|$)/.test(str)) return 'IntEnv_Brick';
     if (m = str.match(/^\(Grabbable_Prop\)_DEMOUTABLE_([^_]+)/)) return `ShopItem_${m[1]}_Name`;
     if (m = str.match(/^\(Grabbable_Prop\)_([^_]+)/)) return `ShopItem_${m[1]}_Name`;
     if (/^\(Interactable_Readable_Prop\)_AB_\d+_.*Recipe$/.test(str)) return 'IntEnv_Recipe';
-    if (m = str.match(/^\(Interactable_Prop\)_([^_]+)/)) return `IntEnv_${m[1]}`;
+    if (m = str.match(/^\(Interactable_Prop\)_+([^_]+)/)) return `IntEnv_${m[1]}`;
     if (m = str.match(/^\(Interactable\)\s+(.+)/)) return `IntEnv_${m[1].trim().replace(/\s+/g, '')}`;
     if (m = str.match(/^\(Tool\)\s+Paint Spray\s*-\s*(.+)$/)) {
         const name = m[1].trim().replace(/\s+/g, '');
@@ -17,6 +19,7 @@ function getKey(input) {
     }
     if (m = str.match(/^\(Tool\)_?(.+?)(?:_\d+)?$/)) return `ToolName_${m[1].trim().replace(/\s+/g, '')}`;
     if (m = str.match(/^\(Fluid\)\s+(.+?)(?:_\d+)?$/)) return `FluidName_${m[1].replace(/\s+/g, '')}`;
+
     if (str.startsWith('(Part)_')) return `PartName_${str.slice(7).replace(/_\d+$/, '')}`;
     if (m = str.match(/^\(Part\)\s+([^-]+?)\s*-\s*(.+)$/)) {
         const name = m[1].trim().replace(/\s+/g, '');
@@ -42,9 +45,8 @@ function getTitle(p) {
             name.replace(/TimingGear$/, 'TimingGearBig'),
             name.replace(/^Battery$/, 'CarBattery')
         ];
-        for (const variant of variants) {
+        for (const variant of variants)
             keys.push(`PartName_${variant}`, `PSI_${variant}`, `PartName_Polonez_${variant}`, `PartName_Fiat126p_${variant}`);
-        }
     }
 
     for (const key of keys)
