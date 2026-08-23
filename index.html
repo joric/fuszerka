@@ -58,6 +58,8 @@ let settings = localData;
 
 settings.language = settings.language || 'en';
 
+let keywordFilter = null;
+
 lang = {};
 
 function saveSettings() {
@@ -109,6 +111,8 @@ window.onload = function() {
       map.unproject([0, tileSize], 0),
       map.unproject([tileSize, 0], 0)
   );
+
+  map.setMaxBounds(bounds);
 
   try {
     L.control.mousePosition({wrapLng: false, lngFirst: true, lngFormatter:lng=>Math.round(lng), latFormatter:lat=>Math.round(lat)}).addTo(map);
@@ -189,10 +193,15 @@ window.onload = function() {
 
   let layercontrol = L.control.layers(baseLayers, layers, {collapsed: false, position: 'topright'}).addTo(map);
 
+  function onFilter(keywords, matchCount) {
+    settings.searchString = keywords.join(' ');
+    saveSettings();
+  }
+
   // Keyword-filter search: on Enter, only markers matching every typed
   // keyword remain on the map. Implemented in keyword-filter-search.js so
   // it can be reused across other Leaflet projects.
-  const keywordFilter = L.control.keywordFilter({
+  keywordFilter = L.control.keywordFilter({
     position: 'topleft',
     placeholder: 'Search...',
     clearTitle: 'Clear',
@@ -201,6 +210,7 @@ window.onload = function() {
     getMarkers: () => allMarkers,
     getSearchableText: (marker) => getSearchableText(marker),
     targetLayer: markersLayer,
+    onFilter: onFilter, 
   }).addTo(map);
 
   map.removeLayer(imageLayer);
@@ -218,11 +228,16 @@ window.onload = function() {
                   marker.bindTooltip(()=> getLocalizedTitle(feature.properties) || feature.properties.name || '');
                   return marker;
               }
-          });
+    });
+    geoJsonLayer.addTo(markersLayer);
+    allMarkers = geoJsonLayer.getLayers();
 
-          geoJsonLayer.addTo(markersLayer);
-          allMarkers = geoJsonLayer.getLayers();
-      });
+    if (settings.searchString) {
+      keywordFilter._input.value = settings.searchString;
+      keywordFilter.applyFilter(settings.searchString); 
+    }
+
+  });
 
   let lang_list = {
     "en": "en",
@@ -246,6 +261,16 @@ window.onload = function() {
     lang = data;
   });
 
+
+  if (settings.center && settings.zoom) {
+    map.setView(settings.center, settings.zoom, { animate: false });
+  }
+
+  map.on('moveend zoomend', function(e) {
+    settings.center = [map.getCenter().lat, map.getCenter().lng]; // avoid circular refs here
+    settings.zoom = map.getZoom();
+    saveSettings();
+  });
 };
 
 </script>
