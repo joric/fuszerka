@@ -41,6 +41,37 @@ html, body, #map {
   left: 12px;
   bottom: 32px;
 }
+
+.custom-marker-container {
+  position: relative;
+  width: 30px;
+  height: 50px;
+  text-align: center;
+}
+
+.marker-icon {
+  width: 30px;
+  height: 40px;
+  background: url('https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png') no-repeat center;
+  background-size: contain;
+}
+
+.marker-label {
+  position: absolute;
+  bottom: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 200px;
+  font-size: 13px;
+  color: white;
+  text-shadow: 1px 1px 4px black;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /*pointer-events: none;*/
+}
+
 </style>
 
 <div id="map"></div>
@@ -66,11 +97,24 @@ function saveSettings() {
   localStorage.setItem(localDataName, JSON.stringify(localData));
 }
 
+function getTooltipText(p) {
+  let title = getLocalizedTitle(p);
+  if (title) return `<b>${title}</b><br>${p.key||p.name}`;
+  return p.name;
+}
+
 function getLocalizedTitle(p) {
   let title = p.key ? lang[p.key] : getTitle(p);
-  if (title && title != p.name) return `<b>${title}</b><br>${p.name}<br>${p.key||''}`;
-  return title;
+  if (title && title != p.name) return title;//`<b>${title}</b><br>${p.name}<br>${p.key||''}`;
+  return title||'';
 }
+
+function getTitleText(p) {
+  let title = p.key ? lang[p.key] : getTitle(p);
+  if (title) title = `<b>${title}</b>`;
+  return [title, p.key, p.name].filter(str => str && String(str).trim()).join('<br>');
+}
+
 
 // Builds the searchable text blob for a marker (title/name/itemName/path).
 function getSearchableText(marker) {
@@ -216,29 +260,6 @@ window.onload = function() {
   map.removeLayer(imageLayer);
   //map.removeLayer(markersLayer);
 
-  fetch('data/markers.json')
-      .then(r => r.json())
-      .then(data => {
-          const geoJsonLayer = L.geoJSON(data, {
-              coordsToLatLng: coords => L.latLng(coords[2], coords[0]),
-              pointToLayer: (feature, latlng) => {
-                  const marker = L.marker(latlng);
-                  //marker.bindPopup(() => `${getLocalizedTitle(feature.properties)}<pre style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${JSON.stringify(feature, null, 2)}</pre>`);
-                  marker.bindPopup(() => `${getLocalizedTitle(feature.properties)}<hr><div style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${feature.properties.path}</div>`, {minWidth:320, maxWidth:400});
-                  marker.bindTooltip(()=> getLocalizedTitle(feature.properties) || feature.properties.name || '');
-                  return marker;
-              }
-    });
-    geoJsonLayer.addTo(markersLayer);
-    allMarkers = geoJsonLayer.getLayers();
-
-    if (settings.searchString) {
-      keywordFilter._input.value = settings.searchString;
-      keywordFilter.applyFilter(settings.searchString); 
-    }
-
-  });
-
   let lang_list = {
     "en": "en",
     "fr": "fr",
@@ -259,6 +280,48 @@ window.onload = function() {
 
   fetch(`data/Localization/${lang_list[settings.language]}.json`).then(r=>r.json()).then(data=>{
     lang = data;
+
+    fetch('data/markers.json')
+        .then(r => r.json())
+        .then(data => {
+            const geoJsonLayer = L.geoJSON(data, {
+                coordsToLatLng: coords => L.latLng(coords[2], coords[0]),
+                pointToLayer: (feature, latlng) => {
+                    //const marker = L.marker(latlng);
+
+                    let title = getLocalizedTitle(feature.properties);
+
+                    let marker = L.marker(latlng, {
+                      icon: L.divIcon({
+                        html: `
+                          <div class="custom-marker-container">
+                            <div class="marker-icon"></div>
+                            <div class="marker-label">${title}</div>
+                          </div>
+                        `,
+                        className: 'custom-marker', // for additional styling
+                        iconSize: [30, 50], // [width, height] - MUST include space for label
+                        iconAnchor: [15, 40] // [x, y] - point of the icon that corresponds to marker location
+                      })
+                    })
+
+
+                    //marker.bindPopup(() => `${getLocalizedTitle(feature.properties)}<pre style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${JSON.stringify(feature, null, 2)}</pre>`);
+                    marker.bindPopup(() => getTitleText(feature.properties)+`<hr><div style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${feature.properties.path}</div>`, {minWidth:320, maxWidth:400});
+                    marker.bindTooltip(()=> getTooltipText(feature.properties), {offset: [16,-20]});
+                    return marker;
+                }
+      });
+      geoJsonLayer.addTo(markersLayer);
+      allMarkers = geoJsonLayer.getLayers();
+
+      if (settings.searchString) {
+        keywordFilter._input.value = settings.searchString;
+        keywordFilter.applyFilter(settings.searchString); 
+      }
+
+    });
+
   });
 
 

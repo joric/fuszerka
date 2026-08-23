@@ -48,7 +48,7 @@
   padding: 8px 12px;
   font-size: 14px;
   font-family: inherit;
-  width: 60px;
+  width: 80px;
   transition: all 0.3s ease;
 }
 
