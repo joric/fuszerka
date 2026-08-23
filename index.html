@@ -111,7 +111,7 @@ function getTooltipText(p) {
 
 function getPopupText(p) {
   let title = getLocalizedTitle(p);
-  return [title, p.key, `<small>${p.name}</small>`].filter(str => str && String(str).trim()).join('<br>');
+  return [title, p.key, p.name].filter(str => str && String(str).trim()).join('<br>');
 }
 
 
