@@ -62,6 +62,7 @@ function getKey(input) {
 
     if (str.startsWith('(Part)')) {
         n = str.slice(6).trim();
+        if (n.startsWith('_')) n = n.slice(1);
         const i = n.indexOf(' - ');
         if (i >= 0) {
             const prefix = n.slice(0, i).trim().replace(/\s+/g, '');
@@ -88,12 +89,7 @@ function getTitle(p) {
 
     if (k.startsWith('PartName_')) {
         const name = k.slice('PartName_'.length);
-        const variants = [
-            name,
-            name.replace(/TimingGearCover$/, 'TimingChainCover'),
-            name.replace(/TimingGear$/, 'TimingGearBig'),
-            name.replace(/^Battery$/, 'CarBattery')
-        ];
+        const variants = [name, name.replace(/TimingGearCover$/, 'TimingChainCover'), name.replace(/TimingGear$/, 'TimingGearBig'), name.replace(/^Battery$/, 'CarBattery')];
         for (const variant of variants) {
             keys.push(`PartName_${variant}`);
             keys.push(`PartName_Polonez_${variant}`);
