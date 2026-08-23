@@ -13,9 +13,6 @@
 <script src="https://cdn.jsdelivr.net/npm/leaflet-edgebuffer@1.0.7/src/leaflet.edgebuffer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tilelayer-canvas@1.1.5/index.min.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/leaflet-search@4.0.0/dist/leaflet-search.src.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-search@4.0.0/dist/leaflet-search.src.min.css">
-
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-mouse-position@1.2.0/src/L.Control.MousePosition.min.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet-mouse-position@1.2.0/src/L.Control.MousePosition.min.js"></script>
 
@@ -23,6 +20,9 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 <script src="https://unpkg.com/leaflet.featuregroup.subgroup@1.0.2/dist/leaflet.featuregroup.subgroup.js"></script>
+
+<!-- Reusable keyword-filter search control (rounded corners, responsive width, autofocus) -->
+<script src="js/keyword-filter-search.js"></script>
 
 <style>
 html, body, #map {
@@ -52,7 +52,6 @@ html, body, #map {
 
 <script>
 let tileset_base = location.protocol === 'file:' ? '../fuszerka_tileset' : 'https://joric.github.io/fuszerka_tileset';
-let searchControl = null;
 let searchMarkers = [];
 
 let localDataName = 'joricsFuszerka';
@@ -73,6 +72,12 @@ function getTitle(feature) {
   let desc = lang[p.descriptionKey] || '';
   //return desc ? `${name} (${desc})` : name;
   return name;
+}
+
+// Builds the searchable text blob for a marker (title/name/itemName/path).
+function getSearchableText(marker) {
+  const p = marker.feature ? marker.feature.properties : {};
+  return [p.title, p.name, p.itemName, p.path].filter(str => str && String(str).trim()).join(' ');
 }
 
 window.onload = function() {
@@ -183,51 +188,20 @@ window.onload = function() {
 
   let layercontrol = L.control.layers(baseLayers, layers, {collapsed: false, position: 'topright'}).addTo(map);
 
-  /*
-  searchControl = new L.Control.Search({
-    propertyName: 'path',
-    layer: L.featureGroup(Object.values(layers)),
-    hideMarkerOnCollapse: true,
-    initial: false,
+  // Keyword-filter search: on Enter, only markers matching every typed
+  // keyword remain on the map. Implemented in keyword-filter-search.js so
+  // it can be reused across other Leaflet projects.
+  const keywordFilter = L.control.keywordFilter({
     position: 'topleft',
-  })
-  */
+    placeholder: 'Search...',
+    clearTitle: 'Clear',
+    autofocus: false,
+    enableShortcut: true,
+    getMarkers: () => searchMarkers,
+    getSearchableText: (marker) => getSearchableText(marker),
+    targetLayer: markersLayer,
+  }).addTo(map);
 
-  searchControl = new L.Control.Search({
-    hideMarkerOnCollapse: true,
-    initial: false,
-    position: 'topleft',
-
-    formatData: function (json) { return json; },
-    filterData: function (text, records) { return records; },
-    //buildTip: function (key, val) { return '<li>' + (val.title || key) + '</li>'; },
-
-    sourceData: function (text, callback) {
-      text = text.toLowerCase();
-      const results = {};
-
-      searchMarkers.forEach((marker, i) => {
-        const p = marker.feature ? marker.feature.properties : {};
-        const title = p.title || p.itemName || p.name || '';
-        const s = [p.title, p.name, p.itemName, p.path].filter(str => str && str.trim()).join(' ');
-
-        if (s.toLowerCase().includes(text)) {
-          const loc = marker.getLatLng();
-          loc.title = title;
-          loc.layer = marker;
-          const cc = [Math.round(loc.lat), Math.round(loc.lng)];
-          const key = `${title} (${cc[0]}, ${cc[1]})`;
-          results[key] = loc;
-        }
-      });
-
-      callback(results);
-      return this;
-    },
-  });
-
-
-  map.addControl(searchControl);
   map.removeLayer(imageLayer);
   //map.removeLayer(markersLayer);
 
@@ -246,15 +220,6 @@ window.onload = function() {
           }).addTo(markersLayer);
       });
 
-  document.addEventListener("keydown",function (e) {
-    if (e.target.id.startsWith('searchtext')) return;
-    if (e.code=='KeyF') {
-      if (e.ctrlKey) {
-        searchControl.expand(true);
-        e.preventDefault();
-      }
-    }
-  });
 /*
   let lang_list = {
     "en": "en",
