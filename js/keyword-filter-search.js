@@ -49,12 +49,12 @@
   padding: 8px 10px;
   font-size: 14px;
   font-family: inherit;
-  width: 150px;
+  width: 100px;
   transition: width 0.2s ease;
 }
 
 .keyword-filter-control .keyword-filter-input:focus {
-  width: 360px;
+  width: 200px;
 }
 
 .keyword-filter-control .keyword-filter-count {
