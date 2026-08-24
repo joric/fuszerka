@@ -65,7 +65,7 @@ function getKey(input) {
     if (m = str.match(/^\(Tool\)_?(.+)$/)) return `ToolName_${clean(stripNum(m[1]))}`;
 
     if (m = str.match(/^\(Fluid\)\s+(.+)$/)) {
-        n = m[1].trim();
+        n = m[1].trim().replace('_empty','');
         if (/^Vodka(?:_\d+)?$/i.test(n)) return 'ProductName_Vodka_1';
         if (/^Beer\s+Bottle(?:_\d+)?$/i.test(n)) return 'FluidName_Beer';
         if (/^Wine(?:_\d+)?$/i.test(n)) return 'FluidName_Wine';
