@@ -5,7 +5,7 @@ function getKey(input) {
     const stripNum = s => s.replace(/(?:_\d+)+$/, '');
     const clean = s => s.trim().replace(/\s+/g, '');
 
-    //if (/^MainMapBorder_ALL(?:_\d+)?$/.test(str)) return 'ShopItem_MetalFence_Name';
+    if (/^MainMapBorder_ALL(?:_\d+)?$/.test(str)) return 'ShopItem_MetalFence_Name';
 
     if (/^\(Part_Decoration\)_CustomLicensePlate(?:_|$)/.test(str)) return 'PartName_CustomLicensePlate_01_0';
     if (str.startsWith('(Part_Decoration)_')) {
@@ -31,7 +31,9 @@ function getKey(input) {
     if (/^\(Grabbable_Prop\)_QuestPlank(?:_|$)/.test(str)) return 'IntEnv_WoodenPlank';
     if (/^\(Grabbable_Prop\)_Crate(?:_|$)/.test(str)) return 'IntEnv_WoodenCrate';
 
+    if (/^\(Grabbable_Prop\)_DEMOUTABLE_MetalFence(?:_|$)/.test(str)) return 'ShopItem_MetalFence_Name';
     if (m = str.match(/^\(Grabbable_Prop\)_DEMOUTABLE_(.+)$/)) return `ShopItem_${stripNum(m[1])}_Name`;
+
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_Animal_(.+)$/)) return `IntEnv_${stripNum(m[1])}`;
     if (m = str.match(/^\(Grabbable_Collectable_Prop\)_(.+)$/)) return `IntEnv_${stripNum(m[1])}`;
 
