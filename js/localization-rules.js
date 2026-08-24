@@ -7,6 +7,8 @@ function getKey(input) {
 
     if (/^MainMapBorder_ALL(?:_\d+)?$/.test(str)) return 'Interaction_Closed';
 
+    if (/^\(Interactable_Prop\)__Door_Base(?:_\d+)?$/.test(str)) return 'IntEnv_Door';
+
     if (/^\(Part_Decoration\)_CustomLicensePlate(?:_|$)/.test(str)) return 'PartName_CustomLicensePlate_01_0';
     if (str.startsWith('(Part_Decoration)_')) {
         n = stripNum(str.slice('(Part_Decoration)_'.length));
