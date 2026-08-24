@@ -5,7 +5,7 @@ function getKey(input) {
     const stripNum = s => s.replace(/(?:_\d+)+$/, '');
     const clean = s => s.trim().replace(/\s+/g, '');
 
-    if (/^MainMapBorder_ALL(?:_\d+)?$/.test(str)) return 'ShopItem_MetalFence_Name';
+    if (/^MainMapBorder_ALL(?:_\d+)?$/.test(str)) return 'Interaction_Closed';
 
     if (/^\(Part_Decoration\)_CustomLicensePlate(?:_|$)/.test(str)) return 'PartName_CustomLicensePlate_01_0';
     if (str.startsWith('(Part_Decoration)_')) {
