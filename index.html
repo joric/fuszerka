@@ -242,6 +242,8 @@ window.onload = function() {
   function onFilter(keywords, matchCount) {
     settings.searchString = keywords.join(' ');
 
+    location.hash = settings.searchString;
+
     if (matchCount>0 && matchCount < 100) {
       const visibleMarkers = markersLayer.getLayers().filter(marker => {
           return marker.options.visible !== false;
