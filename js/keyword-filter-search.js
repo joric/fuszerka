@@ -195,7 +195,7 @@
       });
 
       if (this._count) {
-        this._count.textContent = keywords.length === 0 ? '' : matchCount + ' found';
+        this._count.textContent = keywords.length === 0 ? '' : matchCount;
       }
 
       if (typeof this.options.onFilter === 'function') {
