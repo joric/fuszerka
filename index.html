@@ -311,8 +311,8 @@ window.onload = function() {
 
 
                     //marker.bindPopup(() => `${getLocalizedTitle(feature.properties)}<pre style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${JSON.stringify(feature, null, 2)}</pre>`);
-                    marker.bindPopup(() => getPopupText(p)+`<hr><div style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${feature.properties.path}</div>`, {minWidth:320, maxWidth:400});
-                    marker.bindTooltip(()=> getTooltipText(p), {offset: [16,-20]});
+                    marker.bindPopup(() => getPopupText(p)+`<hr><div style="white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;">${feature.properties.path}</div>`, {minWidth:320, maxWidth:400, offset: [0, -35]});
+                    marker.bindTooltip(()=> getTooltipText(p), {offset: [14,-26]});
                     return marker;
                 }
       });
