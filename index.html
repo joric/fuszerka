@@ -241,6 +241,18 @@ window.onload = function() {
 
   function onFilter(keywords, matchCount) {
     settings.searchString = keywords.join(' ');
+
+    if (matchCount>0) {
+      const visibleMarkers = markersLayer.getLayers().filter(marker => {
+          return marker.options.visible !== false; // or your visibility logic
+      });
+      const bounds = L.latLngBounds(visibleMarkers.map(marker => marker.getLatLng()));
+      map.fitBounds(bounds, {
+          padding: [50, 50],
+          maxZoom: 6,
+      });
+    }
+
     saveSettings();
   }
 
@@ -319,9 +331,15 @@ window.onload = function() {
       geoJsonLayer.addTo(markersLayer);
       allMarkers = geoJsonLayer.getLayers();
 
+      if (location.hash.length>1) {
+        let param = decodeURIComponent(location.hash.slice(1));
+        settings.searchString = param;
+        saveSettings();
+      }
+
       if (settings.searchString) {
         keywordFilter._input.value = settings.searchString;
-        keywordFilter.applyFilter(settings.searchString); 
+        keywordFilter.applyFilter(settings.searchString);
       }
 
       keywordFilter._input.placeholder = lang['UI_Filter_Search_Placeholder'] || 'Search...';
