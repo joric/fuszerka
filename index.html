@@ -242,9 +242,9 @@ window.onload = function() {
   function onFilter(keywords, matchCount) {
     settings.searchString = keywords.join(' ');
 
-    if (matchCount>0) {
+    if (matchCount>0 && matchCount < 100) {
       const visibleMarkers = markersLayer.getLayers().filter(marker => {
-          return marker.options.visible !== false; // or your visibility logic
+          return marker.options.visible !== false;
       });
       const bounds = L.latLngBounds(visibleMarkers.map(marker => marker.getLatLng()));
       map.fitBounds(bounds, {
@@ -269,6 +269,7 @@ window.onload = function() {
     getSearchableText: (marker) => getSearchableText(marker),
     targetLayer: markersLayer,
     onFilter: onFilter, 
+    onRemove: ()=> { location.hash = '' },
   }).addTo(map);
 
   map.removeLayer(imageLayer);
