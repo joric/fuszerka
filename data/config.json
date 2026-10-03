@@ -1,0 +1,29 @@
+{
+  "fuszerka": {
+    "name": "Cheap Car Repair",
+    "size": 1418.129,
+    "worlds": {
+      "default": {
+        "baseLayers": [
+          {
+            "bounds": { "left": -745.67, "top": 999.81465, "right": 672.45905, "bottom": -418.31435  },
+            "name": "default",
+            "urlTemplate": "https://joric.github.io/fuszerka_tileset/tiles/1.3.003/{z}/{y}/{x}.webp",
+            "tileSize": 512,
+            "maxAvailableZoom": 7
+          }
+        ],
+        "overlays": [
+          {
+            "name": "Map_Game",
+            "size": [1628, 809],
+            "remap": [[[706.5,711.5],[844,166]], [[-102.185, 5.1865],[603.6866, 180.6469]]]
+          }
+        ],
+        "markers": {
+          "mapping": [ ["x", 1], ["z", 1], ["y", 1] ]
+        }
+      }
+    }
+  }
+}
